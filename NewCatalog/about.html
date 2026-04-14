@@ -1,0 +1,366 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>About — Catalog</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      #mobileMenu { max-height: 0; overflow: hidden; transition: max-height 350ms ease; }
+      #mobileMenu.open { max-height: 400px; }
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .editorial-shadow {
+        box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .glass-nav {
+        backdrop-filter: blur(16px);
+        background-color: rgba(254, 249, 241, 0.8);
+      }
+      .stack-image-1 { transform: rotate(-2deg) translateX(-4px); }
+      .stack-image-2 { transform: rotate(1deg) translateX(2px); }
+
+      /* Marquee strip */
+      @keyframes marquee {
+        from { transform: translateX(0); }
+        to   { transform: translateX(-50%); }
+      }
+      .marquee-track {
+        display: flex;
+        width: max-content;
+        animation: marquee 28s linear infinite;
+      }
+      .marquee-wrap { overflow: hidden; }
+    </style>
+
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8 md:gap-12">
+      <a class="text-3xl font-headline italic text-[#1d1b17] dark:text-[#fef9f1] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="material-symbols-outlined text-on-surface hover:scale-95 transition-transform" data-icon="account_circle" id="navAccountBtn" type="button">account_circle</button>
+      <button class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" id="navHamburger" aria-label="Open menu" type="button">
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine1"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine2"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine3"></span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="md:hidden glass-nav border-t border-on-surface/10">
+    <div class="flex flex-col px-6 py-4 gap-5">
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false,skip=false;
+    if(!btn)return;
+    function closeMenu(){open=false;menu.classList.remove("open");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
+    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("open",open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
+    document.addEventListener("click",function(e){if(skip)return;if(open&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){closeMenu();}});
+  })();
+</script>
+
+    <main class="pt-24 md:pt-32 pb-0">
+
+      <!-- ── Hero ── -->
+      <section class="max-w-screen-2xl mx-auto px-6 md:px-12 mb-16 md:mb-24">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8 lg:gap-10 mb-10 md:mb-16">
+          <div class="max-w-3xl">
+            <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-4">Our story</span>
+            <h1 class="font-headline italic text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-on-surface tracking-tighter leading-none">
+              Food is<br/><span class="opacity-30">worth</span><br/>remembering.
+            </h1>
+          </div>
+          <div class="max-w-sm">
+            <p class="font-body text-base leading-relaxed text-on-surface-variant">
+              Catalog is the social dining layer the internet was missing — a place to log what you've eaten, discover what's worth eating, and follow the people whose palate you trust.
+            </p>
+            <a href="login.html" class="inline-flex items-center gap-2 mt-8 bg-primary text-on-primary px-8 py-4 rounded-full font-label text-xs font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow">
+              Join Catalog
+              <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Divider rule -->
+        <div class="h-px w-full bg-on-surface/10"></div>
+      </section>
+
+      <!-- ── Marquee strip ── -->
+      <div class="marquee-wrap border-y border-on-surface/10 py-5 mb-24 bg-surface-container-low">
+        <div class="marquee-track font-headline italic text-4xl text-on-surface/20 gap-16 select-none">
+          <!-- Two copies for seamless loop -->
+          <span class="px-8">Log it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Save it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Share it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Discover</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Curate</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Explore</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Follow</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Log it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Save it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Share it</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Discover</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Curate</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Explore</span><span class="px-8 text-primary/40">·</span>
+          <span class="px-8">Follow</span><span class="px-8 text-primary/40">·</span>
+        </div>
+      </div>
+
+      <!-- ── Mission ── -->
+      <section class="max-w-screen-2xl mx-auto px-6 md:px-12 mb-16 md:mb-24">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-4">Why we built this</span>
+            <h2 class="font-headline italic text-5xl md:text-6xl text-on-surface tracking-tighter leading-tight mb-8">
+              The meal you loved deserves more than a faded memory.
+            </h2>
+            <p class="font-body text-base text-on-surface-variant leading-relaxed mb-6">
+              We've all been there — a restaurant recommendation half-remembered from a conversation six months ago, a dish so good you promised yourself you'd go back, a neighbourhood you explored once and never found again.
+            </p>
+            <p class="font-body text-base text-on-surface-variant leading-relaxed">
+              Catalog is the app for people who care. Not just about eating, but about the experience of eating — the context, the company, the feeling of finding somewhere that feels exactly right. We built it because we needed it, and we think you do too.
+            </p>
+          </div>
+
+          <!-- Editorial bento stack -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2 bg-surface-container-low rounded-xl editorial-shadow p-8">
+              <div class="font-headline italic text-6xl text-primary mb-2">10k+</div>
+              <div class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold">Restaurants catalogued</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-6 border border-on-surface/5">
+              <div class="font-headline italic text-4xl text-on-surface mb-2">500+</div>
+              <div class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold">Curated lists</div>
+            </div>
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-6 border border-on-surface/5">
+              <div class="font-headline italic text-4xl text-on-surface mb-2">5+</div>
+              <div class="font-label text-xs uppercase tracking-widest text-on-surface-variant font-bold">Cities covered</div>
+            </div>
+            <div class="col-span-2 bg-primary rounded-xl p-8 relative overflow-hidden">
+              <span class="material-symbols-outlined absolute right-6 bottom-6 text-on-primary/10 text-8xl" style="font-size:96px">restaurant</span>
+              <div class="font-label text-xs uppercase tracking-widest text-on-primary/60 font-bold mb-3">Our promise</div>
+              <p class="font-headline italic text-2xl text-on-primary leading-snug max-w-xs">
+                Every great meal deserves a permanent place in your story.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── How it works ── -->
+      <section class="bg-surface-container-low py-16 md:py-24 mb-16 md:mb-24">
+        <div class="max-w-screen-2xl mx-auto px-6 md:px-12">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+            <div>
+              <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-4">Features</span>
+              <h2 class="font-headline italic text-5xl md:text-6xl text-on-surface tracking-tighter leading-tight">
+                Everything in one place.
+              </h2>
+            </div>
+            <p class="font-body text-sm text-on-surface-variant max-w-sm leading-relaxed">
+              Simple tools built around how you actually discover, remember, and share food.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Feature 1 -->
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 flex flex-col gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">restaurant_menu</span>
+              </div>
+              <div>
+                <div class="font-label text-xs uppercase tracking-widest font-bold text-on-surface mb-3">Been</div>
+                <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                  Log every restaurant you visit. Add a rating, jot down what you ordered, and build your personal dining history.
+                </p>
+              </div>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 flex flex-col gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">bookmarks</span>
+              </div>
+              <div>
+                <div class="font-label text-xs uppercase tracking-widest font-bold text-on-surface mb-3">Saved</div>
+                <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                  Bookmark places you want to try. Your wishlist, always with you — no more forgotten recommendations.
+                </p>
+              </div>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 flex flex-col gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">format_list_bulleted</span>
+              </div>
+              <div>
+                <div class="font-label text-xs uppercase tracking-widest font-bold text-on-surface mb-3">Lists</div>
+                <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                  Create and share curated collections — best ramen spots, hidden cafés, the definitive date-night guide.
+                </p>
+              </div>
+            </div>
+
+            <!-- Feature 4 -->
+            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 flex flex-col gap-6">
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary">group</span>
+              </div>
+              <div>
+                <div class="font-label text-xs uppercase tracking-widest font-bold text-on-surface mb-3">Friends</div>
+                <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                  Follow people with great taste. See what your circle is eating and discover through people you trust.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Support CTA ── -->
+      <section class="max-w-screen-2xl mx-auto px-6 md:px-12 pb-16 md:pb-24">
+        <div class="bg-primary rounded-xl p-10 md:p-14 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
+          <span class="material-symbols-outlined absolute right-8 bottom-4 text-on-primary/10 select-none" style="font-size:128px">support_agent</span>
+          <div class="relative z-10">
+            <div class="font-label text-xs uppercase tracking-widest text-on-primary/60 font-bold mb-3">Need help?</div>
+            <h2 class="font-headline italic text-4xl md:text-5xl text-on-primary tracking-tight leading-tight mb-3">We're here.</h2>
+            <p class="font-body text-sm text-on-primary/70 max-w-md leading-relaxed">
+              Got feedback, a bug to report, or a restaurant you'd like us to add? Head to our support page.
+            </p>
+          </div>
+          <a href="support.html" class="relative z-10 flex-shrink-0 inline-flex items-center gap-2 bg-on-primary text-primary px-8 py-4 rounded-full font-label text-xs font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow">
+            Go to support
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog. Food social network for explorers.</p>
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="terms.html">Terms of Service</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="#">Instagram</a>
+        
+      </div>
+      <div class="mt-8 flex gap-6">
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="restaurant">restaurant</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="public">public</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="favorite">favorite</span>
+      </div>
+    </footer>
+
+    <script type="module" src="./static-page.js"></script>
+  </body>
+</html>

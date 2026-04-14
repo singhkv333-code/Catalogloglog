@@ -1,0 +1,21 @@
+{
+  "name": "catalog-new",
+  "version": "1.0.0",
+  "description": "Catalog frontend + auth server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "smoke:db": "node scripts/smoke-db.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^16.0.0",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^8.0.0",
+    "pg": "^8.18.0"
+  },
+  "type": "commonjs",
+  "engines": { "node": ">=18" }
+}

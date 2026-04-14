@@ -1,0 +1,422 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Restaurant — Catalog</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      /* Mobile nav toggle */
+      #mobileMenu {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 350ms ease;
+      }
+      #mobileMenu.open {
+        max-height: 400px;
+      }
+      /* No scrollbar */
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .editorial-shadow {
+        box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .glass-nav {
+        backdrop-filter: blur(16px);
+        background-color: rgba(254, 249, 241, 0.8);
+      }
+      /* Been / Save toggle buttons */
+      #beenBtn, #savedBtn {
+        transition: background-color 150ms ease, color 150ms ease, opacity 150ms ease, transform 100ms ease;
+      }
+      #beenBtn[data-active="1"]:hover, #savedBtn[data-active="1"]:hover {
+        opacity: 0.85;
+      }
+      #beenBtn[data-active="0"]:hover, #savedBtn[data-active="0"]:hover,
+      #beenBtn:not([data-active]):hover, #savedBtn:not([data-active]):hover {
+        background-color: #ece7e1; /* surface-container-high */
+      }
+      #beenBtn:active, #savedBtn:active {
+        transform: scale(0.95);
+      }
+    </style>
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8 md:gap-12">
+      <a class="text-3xl font-headline italic text-[#1d1b17] dark:text-[#fef9f1] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="material-symbols-outlined text-on-surface hover:scale-95 transition-transform" data-icon="account_circle" id="navAccountBtn" type="button">account_circle</button>
+      <button class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" id="navHamburger" aria-label="Open menu" type="button">
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine1"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine2"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine3"></span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="md:hidden glass-nav border-t border-on-surface/10">
+    <div class="flex flex-col px-6 py-4 gap-5">
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    function initHamburger(){
+      var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false;
+      if(!btn||!menu)return;
+      function setOpen(val){open=val;menu.classList.toggle("open",open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";}
+      btn.addEventListener("click",function(e){e.stopPropagation();setOpen(!open);},true);
+      document.addEventListener("click",function(e){if(open&&!btn.contains(e.target)&&!menu.contains(e.target)){setOpen(false);}});
+    }
+    if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",initHamburger);}else{initHamburger();}
+  })();
+</script>
+
+    <main class="pt-24 md:pt-32 pb-16 md:pb-24 max-w-screen-2xl mx-auto px-6 md:px-12">
+      <!-- Hero -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-stretch mb-12 md:mb-20">
+        <div class="lg:col-span-5">
+          <div class="aspect-[16/9] sm:aspect-[4/3] lg:aspect-auto lg:h-full rounded-xl overflow-hidden bg-surface-container-lowest editorial-shadow" id="restaurantHeroImgWrap">
+            <img id="restaurantHeroImg" class="w-full h-full object-cover" alt="" />
+          </div>
+        </div>
+        <div class="lg:col-span-7">
+          <p class="font-label uppercase tracking-widest text-xs text-primary mb-3" id="restaurantEyebrow">Restaurant</p>
+          <h1 class="font-headline italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-none mb-4 md:mb-6" id="restaurantName">Loading…</h1>
+          <p class="font-label text-sm text-on-surface-variant mb-6 md:mb-10" id="restaurantMeta"></p>
+
+          <!-- Friends' average rating (rendered only when friends have rated) -->
+          <div class="hidden mb-10 relative" id="friendsRatingWrap">
+            <button class="w-full text-left bg-surface-container-lowest rounded-2xl editorial-shadow px-6 py-5 flex items-center gap-6 border border-on-surface/5 hover:bg-surface-container-low transition-colors" id="friendsRatingBtn" type="button">
+              <div class="flex flex-col items-center justify-center min-w-[64px]">
+                <span class="font-headline italic text-4xl tracking-tighter text-primary" id="friendsRatingAvg">—</span>
+                <div class="flex items-center gap-0.5 mt-1" id="friendsRatingStars"></div>
+              </div>
+              <div class="h-10 w-px bg-on-surface/10 flex-none"></div>
+              <div class="min-w-0 flex-1">
+                <p class="font-label text-[10px] uppercase tracking-[0.2em] text-primary font-bold mb-1">Friends' rating</p>
+                <p class="font-label text-sm text-on-surface-variant" id="friendsRatingText"></p>
+                <div class="flex flex-wrap gap-2 mt-2" id="friendsRatingAvatars"></div>
+              </div>
+              <span class="material-symbols-outlined text-on-surface-variant text-base flex-none" aria-hidden="true">expand_more</span>
+            </button>
+            <!-- Popover listing each friend's rating -->
+            <div class="hidden absolute left-0 top-full mt-3 w-full md:w-96 bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/10 p-4 z-20" id="friendsRatingPopover">
+              <div class="font-label uppercase tracking-widest text-[10px] text-primary mb-3">Friends who rated</div>
+              <div class="grid gap-1" id="friendsRatingList"></div>
+            </div>
+          </div>
+
+          <!-- Friends who've been here (rendered only when available) -->
+          <div class="hidden mb-10 relative" id="friendsBeenWrap">
+            <button class="w-full bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 flex items-center gap-3 hover:bg-surface-container-low transition-colors" id="friendsBeenBtn" type="button">
+              <div class="flex -space-x-2" id="friendsBeenAvatars"></div>
+              <div class="font-label text-sm text-on-surface-variant truncate" id="friendsBeenText"></div>
+              <span class="material-symbols-outlined text-on-surface-variant text-base ml-auto" aria-hidden="true">expand_more</span>
+            </button>
+            <div class="hidden absolute left-0 top-full mt-3 w-full md:w-96 bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/10 p-4 z-20" id="friendsBeenPopover">
+              <div class="font-label uppercase tracking-widest text-[10px] text-primary mb-3">Friends who've been</div>
+              <div class="grid gap-2" id="friendsBeenList"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 md:gap-4 items-center mb-6 md:mb-10">
+            <button class="bg-surface-container-lowest px-7 py-3 rounded-full font-label text-xs font-bold tracking-widest uppercase editorial-shadow flex items-center gap-2" id="beenBtn" type="button">
+              <span class="material-symbols-outlined text-sm">done</span>
+              Been
+            </button>
+            <button class="bg-surface-container-lowest px-7 py-3 rounded-full font-label text-xs font-bold tracking-widest uppercase editorial-shadow flex items-center gap-2" id="savedBtn" type="button">
+              <span class="material-symbols-outlined text-sm">bookmark</span>
+              Save
+            </button>
+            <button class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-7 py-3 rounded-full font-label text-xs font-bold tracking-widest uppercase editorial-shadow hover:opacity-90 active:scale-95 transition-all flex items-center gap-2" id="addToListBtn" type="button">
+              <span class="material-symbols-outlined text-sm">playlist_add</span>
+              Add to list
+            </button>
+          </div>
+
+          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
+            <div class="flex items-baseline gap-4 mb-6">
+              <h2 class="font-headline text-3xl italic">Rating</h2>
+              <div class="h-px flex-grow bg-on-surface/10"></div>
+            </div>
+
+            <div class="flex flex-wrap gap-6 md:gap-8 items-center">
+              <div>
+                <div class="font-headline italic text-5xl" id="ratingAvg">—</div>
+                <div class="font-label text-xs uppercase tracking-widest opacity-60 mt-1" id="ratingCount">No ratings yet</div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <span class="font-label text-xs uppercase tracking-widest opacity-60">Your rating</span>
+                <div class="flex items-center gap-2" id="yourRatingStars">
+                  <!-- buttons injected -->
+                </div>
+              </div>
+
+              <div class="w-full lg:w-auto flex-1 min-w-[260px]" id="ratingBreakdown">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-3" data-star-row="5">
+                    <div class="font-label text-xs uppercase tracking-widest opacity-60 w-10">5 ★</div>
+                    <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full bg-primary-container w-0" data-star-fill="5"></div>
+                    </div>
+                    <div class="font-label text-xs opacity-60 w-8 text-right tabular-nums" data-star-count="5">0</div>
+                  </div>
+                  <div class="flex items-center gap-3" data-star-row="4">
+                    <div class="font-label text-xs uppercase tracking-widest opacity-60 w-10">4 ★</div>
+                    <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full bg-primary-container w-0" data-star-fill="4"></div>
+                    </div>
+                    <div class="font-label text-xs opacity-60 w-8 text-right tabular-nums" data-star-count="4">0</div>
+                  </div>
+                  <div class="flex items-center gap-3" data-star-row="3">
+                    <div class="font-label text-xs uppercase tracking-widest opacity-60 w-10">3 ★</div>
+                    <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full bg-primary-container w-0" data-star-fill="3"></div>
+                    </div>
+                    <div class="font-label text-xs opacity-60 w-8 text-right tabular-nums" data-star-count="3">0</div>
+                  </div>
+                  <div class="flex items-center gap-3" data-star-row="2">
+                    <div class="font-label text-xs uppercase tracking-widest opacity-60 w-10">2 ★</div>
+                    <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full bg-primary-container w-0" data-star-fill="2"></div>
+                    </div>
+                    <div class="font-label text-xs opacity-60 w-8 text-right tabular-nums" data-star-count="2">0</div>
+                  </div>
+                  <div class="flex items-center gap-3" data-star-row="1">
+                    <div class="font-label text-xs uppercase tracking-widest opacity-60 w-10">1 ★</div>
+                    <div class="flex-1 h-2 rounded-full bg-surface-container-high overflow-hidden">
+                      <div class="h-full bg-primary-container w-0" data-star-fill="1"></div>
+                    </div>
+                    <div class="font-label text-xs opacity-60 w-8 text-right tabular-nums" data-star-count="1">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 mt-8" id="hoursCard">
+            <div class="flex items-baseline gap-4 mb-6">
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-base text-primary" aria-hidden="true">schedule</span>
+                <h2 class="font-headline text-3xl italic">Hours</h2>
+              </div>
+              <div class="h-px flex-grow bg-on-surface/10"></div>
+              <span class="font-label text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full bg-surface-container-high text-on-surface hidden" id="hoursStatusPill">—</span>
+            </div>
+
+            <div class="space-y-2" id="hoursRows">
+              <div class="h-5 rounded bg-surface-container-low"></div>
+              <div class="h-5 rounded bg-surface-container-low"></div>
+              <div class="h-5 rounded bg-surface-container-low"></div>
+              <div class="h-5 rounded bg-surface-container-low"></div>
+            </div>
+            <p class="font-label text-xs opacity-60 mt-4 hidden" id="hoursNote"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Photos -->
+      <section class="mb-20" id="photosSection">
+        <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
+          <div class="flex items-baseline gap-4 mb-6">
+            <h2 class="font-headline text-3xl italic">Photos</h2>
+            <div class="h-px flex-grow bg-on-surface/10"></div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="photosGrid">
+            <div class="aspect-[4/3] rounded-xl overflow-hidden bg-surface-container-low"></div>
+            <div class="aspect-[4/3] rounded-xl overflow-hidden bg-surface-container-low"></div>
+            <div class="aspect-[4/3] rounded-xl overflow-hidden bg-surface-container-low hidden md:block"></div>
+          </div>
+          <p class="font-label text-sm opacity-60 mt-4 hidden" id="photosEmpty">No photos yet.</p>
+        </div>
+      </section>
+
+      <!-- Reviews -->
+      <section class="bg-surface-container-low py-10 md:py-16 rounded-xl editorial-shadow">
+        <div class="max-w-screen-2xl mx-auto px-6 md:px-12">
+          <div class="flex items-baseline gap-4 mb-8 md:mb-10">
+            <h2 class="font-headline text-3xl md:text-4xl italic">Reviews</h2>
+            <div class="h-px flex-grow bg-on-surface/10"></div>
+            <div class="font-label text-xs uppercase tracking-widest opacity-60" id="reviewsCount"></div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
+            <div class="lg:col-span-5">
+              <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
+                <p class="font-label uppercase tracking-widest text-xs text-primary mb-4">Write a review</p>
+                <form id="reviewForm" class="space-y-4">
+                  <textarea
+                    id="reviewText"
+                    class="w-full bg-surface-container-lowest border-none rounded-xl p-4 text-sm font-body focus:ring-1 focus:ring-primary-container outline-none editorial-shadow min-h-[140px]"
+                    placeholder="What stood out? What should people order?"
+                    required
+                  ></textarea>
+                  <div class="flex items-center justify-between gap-4">
+                    <div class="font-label text-xs opacity-60" id="reviewHint"></div>
+                    <button class="bg-primary text-on-primary px-6 py-3 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow" id="postReviewBtn" type="submit">
+                      Post review
+                    </button>
+                  </div>
+                  <p class="font-label text-sm text-error hidden" id="reviewError"></p>
+                </form>
+              </div>
+            </div>
+            <div class="lg:col-span-7">
+              <div class="space-y-6" id="reviewsList">
+                <div class="font-label text-sm opacity-60">Loading reviews…</div>
+              </div>
+              <div class="mt-10 flex justify-center">
+                <button class="bg-surface-container-lowest text-on-surface px-10 py-4 rounded-full font-label text-[10px] font-bold tracking-widest uppercase editorial-shadow hover:bg-surface transition-colors flex items-center gap-3 hidden" id="loadMoreReviewsBtn" type="button">
+                  Load more
+                  <span class="material-symbols-outlined text-sm">expand_more</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog. Food social network for explorers.</p>
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="terms.html">Terms of Service</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="#">Instagram</a>
+        
+      </div>
+      <div class="mt-8 flex gap-6">
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="restaurant">restaurant</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="public">public</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="favorite">favorite</span>
+      </div>
+    </footer>
+
+    <script>
+      // If the module script fails to load (404, wrong static dir, etc.), don't leave the page stuck on "Loading…".
+      // `restaurant.js` sets these globals when it loads/runs.
+      window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = false;
+      window.__CATALOG_RESTAURANT_INIT_DONE__ = false;
+      setTimeout(function () {
+        if (window.__CATALOG_RESTAURANT_INIT_DONE__) return;
+        var nameEl = document.getElementById('restaurantName');
+        var metaEl = document.getElementById('restaurantMeta');
+        if (nameEl && String(nameEl.textContent || '').toLowerCase().includes('loading')) {
+          nameEl.textContent = window.__CATALOG_RESTAURANT_SCRIPT_LOADED__
+            ? 'Still loadingâ€¦'
+            : 'Failed to load page scripts';
+        }
+        if (metaEl && !window.__CATALOG_RESTAURANT_SCRIPT_LOADED__) {
+          metaEl.textContent = 'If you are running the app via Express, make sure it serves the New Catalog folder.';
+        }
+      }, 2500);
+    </script>
+    <script type="module" src="./restaurant.js"></script>
+  </body>
+</html>
