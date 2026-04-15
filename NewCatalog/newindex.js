@@ -510,25 +510,39 @@ async function hydrateCuratedLists({ token }) {
     }
     card.style.display = '';
 
-    const cover = pickListCoverImage(list);
-    const img = card.querySelector('img');
-    const imgContainer = img?.closest('div.absolute.inset-0.overflow-hidden');
+    const previewRestaurants = Array.isArray(list?.preview_restaurants) ? list.preview_restaurants : [];
 
-    if (img) {
+    // The stack has 3 layers in DOM order: [back-shadow, mid-shadow, main-card]
+    const stackRoot = card.querySelector('div.relative');
+    const stackLayers = stackRoot
+      ? Array.from(stackRoot.children).filter((el) => el.classList.contains('absolute'))
+      : [];
+
+    // Main card image (front layer)
+    const mainLayer = stackLayers[2] || card.querySelector('.absolute.overflow-hidden');
+    const mainImg = mainLayer?.querySelector('img');
+    const cover = previewRestaurants[0]?.image_url || pickListCoverImage(list);
+    if (mainImg) {
       if (cover) {
-        img.src = cover;
-        img.alt = list?.title ? String(list.title) : '';
-        img.style.display = '';
+        mainImg.src = cover;
+        mainImg.alt = list?.title ? String(list.title) : '';
+        mainImg.style.display = '';
       } else {
-        // No cover image — show a gradient fallback with the list initial
-        img.style.display = 'none';
-        if (imgContainer && !imgContainer.querySelector('[data-list-fallback]')) {
-          const fallback = document.createElement('div');
-          fallback.setAttribute('data-list-fallback', '1');
-          fallback.className = 'w-full h-full flex items-end bg-gradient-to-br from-surface-container-high to-surface-container-highest';
-          imgContainer.insertBefore(fallback, imgContainer.firstChild);
-        }
+        mainImg.style.display = 'none';
       }
+    }
+
+    // Middle shadow layer — 2nd restaurant image
+    const midImg = stackLayers[1]?.querySelector('img');
+    if (midImg && previewRestaurants[1]?.image_url) {
+      midImg.src = previewRestaurants[1].image_url;
+    }
+
+    // Back shadow layer — 3rd restaurant image (or reuse 2nd if only 2 available)
+    const backImg = stackLayers[0]?.querySelector('img');
+    if (backImg) {
+      const backSrc = previewRestaurants[2]?.image_url || previewRestaurants[1]?.image_url;
+      if (backSrc) backImg.src = backSrc;
     }
 
     const titleOverlay = card.querySelector('p.absolute.bottom-4');
@@ -895,6 +909,18 @@ async function init() {
 
   ensureAccountDropdown({ user });
   ensureViewAllLink();
+
+  // Gate guest vs. authenticated sections
+  const guestSection = document.getElementById('guestSection');
+  const friendActivitySection = document.getElementById('friendActivitySection');
+  const recentlyVisitedSection = document.getElementById('recentlyVisitedSection');
+  if (user) {
+    guestSection?.classList.add('hidden');
+    friendActivitySection?.classList.remove('hidden');
+    recentlyVisitedSection?.classList.remove('hidden');
+  } else {
+    guestSection?.classList.remove('hidden');
+  }
 
   // Step 1: Popular Right Now + cuisine filtering
   let popularRestaurants = [];
