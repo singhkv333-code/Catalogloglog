@@ -14,17 +14,56 @@ const nodemailer = require('nodemailer')
 const JWT_SECRET = process.env.JWT_SECRET
 const PORT = process.env.PORT || 4000
 
+const SUPABASE_URL = 'https://pjsyvlhwuhdibpahputx.supabase.co'
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqc3l2bGh3dWhkaWJwYWhwdXR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3OTE2OTMsImV4cCI6MjA4NTM2NzY5M30._5uc9ukbShs4kVblc8EpkQYTF6aFTth1vcXEJPQixxw'
+
 app.use(cors())
 app.use(express.json())
 
 // Serve New Catalog static files — this directory is __dirname so no path resolution needed.
 app.use(express.static(__dirname))
 
+// ================== SUPABASE JWT RESOLVER ==================
+// Verifies a Supabase access token and returns the matching public.users row.
+// If the user doesn't exist in public.users yet (new Supabase signup), creates them.
+async function resolveSupabaseUser(token) {
+  const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+    headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
+  })
+  if (!resp.ok) return null
+  const supaUser = await resp.json()
+  const email = supaUser?.email
+  if (!email) return null
+
+  // Look up the integer user row
+  let row = await pool.query('SELECT id, email, username FROM users WHERE email = $1', [email])
+  if (!row.rows.length) {
+    // Auto-create the user in public.users so existing routes work unchanged
+    const username = supaUser.user_metadata?.username || email.split('@')[0]
+    row = await pool.query(
+      `INSERT INTO users (email, password, username, created_at)
+       VALUES ($1, '', $2, NOW())
+       ON CONFLICT (email) DO UPDATE SET username = EXCLUDED.username
+       RETURNING id, email, username`,
+      [email, username]
+    )
+  }
+  return row.rows[0] // { id (integer), email, username }
+}
+
 // ================== AUTH MIDDLEWARE ==================
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization
   if (!authHeader) return res.status(401).json({ message: 'No token provided' })
   const token = authHeader.split(' ')[1]
+
+  // Try Supabase JWT first
+  try {
+    const user = await resolveSupabaseUser(token)
+    if (user) { req.user = user; return next() }
+  } catch { /* fall through */ }
+
+  // Fall back to old Express JWT (backwards compat)
   try {
     req.user = jwt.verify(token, JWT_SECRET)
     next()
@@ -249,10 +288,16 @@ async function updateRatingSummary(restaurantId) {
 }
 
 // ================== OPTIONAL AUTH ==================
-function optionalAuth(req, res, next) {
+async function optionalAuth(req, res, next) {
   const authHeader = req.headers.authorization
   if (!authHeader) { req.user = null; return next() }
   const token = authHeader.split(' ')[1]
+
+  try {
+    const user = await resolveSupabaseUser(token)
+    if (user) { req.user = user; return next() }
+  } catch { /* fall through */ }
+
   try { req.user = jwt.verify(token, JWT_SECRET) } catch { req.user = null }
   next()
 }
