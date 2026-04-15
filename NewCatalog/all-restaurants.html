@@ -125,7 +125,7 @@
     </div>
   </div>
   <!-- Mobile dropdown -->
-  <div id="mobileMenu" class="md:hidden glass-nav border-t border-on-surface/10">
+  <div id="mobileMenu" class="hidden md:hidden glass-nav border-t border-on-surface/10">
     <div class="flex flex-col px-6 py-4 gap-5">
       <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
       <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
@@ -139,8 +139,8 @@
   (function(){
     var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false,skip=false;
     if(!btn)return;
-    function closeMenu(){open=false;menu.classList.remove("open");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
-    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("open",open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
+    function closeMenu(){open=false;menu.classList.add("hidden");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
+    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("hidden",!open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
     document.addEventListener("click",function(e){if(skip)return;if(open&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){closeMenu();}});
   })();
 </script>
@@ -262,7 +262,7 @@
     <!-- FOOTER -->
     <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
       <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
-      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog. Food social network for explorers.</p>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
       <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
         <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
         <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
