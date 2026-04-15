@@ -32,39 +32,6 @@ function isValidUsername(username) {
   return /^[a-zA-Z0-9_]{3,30}$/.test(username);
 }
 
-// ─── Password strength ────────────────────────────────────────────────────────
-
-const STRENGTH_LEVELS = [
-  { min: 0,  label: '',       color: '#690008', width: '0%'   },
-  { min: 1,  label: 'Weak',   color: '#c62828', width: '25%'  },
-  { min: 3,  label: 'Fair',   color: '#e65100', width: '50%'  },
-  { min: 5,  label: 'Good',   color: '#2e7d32', width: '75%'  },
-  { min: 7,  label: 'Strong', color: '#1b5e20', width: '100%' },
-];
-
-function scorePassword(pw) {
-  if (!pw) return 0;
-  let score = 0;
-  if (pw.length >= 8)            score += 1;
-  if (pw.length >= 12)           score += 1;
-  if (/[A-Z]/.test(pw))         score += 1;
-  if (/[a-z]/.test(pw))         score += 1;
-  if (/[0-9]/.test(pw))         score += 1;
-  if (/[^A-Za-z0-9]/.test(pw))  score += 2;
-  return score;
-}
-
-function updateStrengthBar(password) {
-  const bar   = document.getElementById('strengthBar');
-  const label = document.getElementById('strengthLabel');
-  if (!bar) return;
-  const score = scorePassword(password);
-  const level = [...STRENGTH_LEVELS].reverse().find(l => score >= l.min) || STRENGTH_LEVELS[0];
-  bar.style.width           = password ? level.width : '0%';
-  bar.style.backgroundColor = level.color;
-  if (label) label.textContent = password ? level.label : '';
-}
-
 // ─── Password toggle ──────────────────────────────────────────────────────────
 
 function wirePasswordToggle(inputId, btnId) {
@@ -119,7 +86,6 @@ function init() {
   const emailEl    = document.getElementById('email');
 
   passwordEl?.addEventListener('input', () => {
-    updateStrengthBar(passwordEl.value);
     clearError('confirmPasswordError');
   });
   confirmEl?.addEventListener('input', () => clearError('confirmPasswordError'));
@@ -200,39 +166,34 @@ function init() {
     setButtonState(createBtn, true, 'Creating account…');
 
     try {
-      // Sign up via Supabase Auth — stores name + username in user_metadata
+      // Sign up via Supabase Auth — name + username stored in user_metadata,
+      // and the on_auth_user_created trigger writes them to public.profiles automatically.
       const { data, error } = await supabase.auth.signUp({
         email: _email,
         password: _password,
         options: {
           data: {
             full_name: fullName,
-            username: username,
+            username:  username,
           },
         },
       });
 
       if (error) throw error;
 
-      // Insert into profiles table if the user object is available
-      // (Supabase may return a user immediately if email confirmation is off,
-      //  or a session-less user if confirmation is on)
-      const userId = data?.user?.id;
-      if (userId) {
-        await supabase.from('profiles').upsert({
-          id:        userId,
-          email:     _email,
-          full_name: fullName,
-          username:  username,
-        }, { onConflict: 'id' });
+      // If Supabase returned a session the user is active immediately
+      // (email confirmation is disabled in the project settings).
+      // Go straight to the app; no need to visit the login page.
+      if (data?.session) {
+        window.location.replace('newindex.html');
+        return;
       }
 
-      // Redirect to login with a success flag
+      // Email confirmation is enabled — send them to login with the success banner.
       window.location.replace('login.html?verified=1');
 
     } catch (err) {
       const msg = err?.message || 'Something went wrong. Please try again.';
-      // Surface friendly messages for common errors
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         setError('profileError', 'An account with this email already exists. Try signing in.');
       } else {

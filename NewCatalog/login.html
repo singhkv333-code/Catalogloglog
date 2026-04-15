@@ -130,7 +130,7 @@
             <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Welcome back</p>
             <h1 class="font-headline text-4xl italic leading-tight">Log in</h1>
             <p class="font-body text-on-surface-variant mt-3">
-              Use the dev account to test the new Catalog UI.
+              Sign in to your Catalog account.
             </p>
           </div>
 
@@ -149,8 +149,7 @@
                 name="email"
                 type="email"
                 autocomplete="email"
-                placeholder="Dev@catalog.com"
-                value="Dev@catalog.com"
+                placeholder="you@example.com"
                 required
               />
             </div>
@@ -163,8 +162,7 @@
                 name="password"
                 type="password"
                 autocomplete="current-password"
-                placeholder="devpassword123"
-                value="devpassword123"
+                placeholder="Your password"
                 required
               />
             </div>
@@ -178,9 +176,6 @@
                 Log in
               </button>
               <p class="font-label text-sm text-error mt-4 hidden" id="loginError"></p>
-              <p class="font-label text-xs opacity-60 mt-4" id="loginHint">
-                Backend required: Express on <span class="font-mono">http://localhost:4000</span>.
-              </p>
               <div class="mt-6 pt-6 border-t border-on-surface/10 text-center">
                 <span class="font-label text-xs opacity-60">Don't have an account?</span>
                 <a class="font-label text-xs font-bold text-primary hover:opacity-80 transition-opacity ml-2 underline underline-offset-2" href="signup.html">Create one →</a>
@@ -208,6 +203,7 @@
       </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="./login.js"></script>
   </body>
 </html>

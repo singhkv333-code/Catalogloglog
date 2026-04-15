@@ -1,51 +1,65 @@
-import { EXPRESS_BASE } from './config.js';
-import { setToken } from './auth.js';
+// login.js — signs in via Supabase Auth, no Express backend needed.
+
+import { getSupabaseClient } from './supabase-client.js';
+
+const supabase = getSupabaseClient();
 
 function setError(message) {
   const el = document.getElementById('loginError');
   if (!el) return;
-  el.textContent = message || 'Login failed.';
+  el.textContent = message || '';
   el.classList.toggle('hidden', !message);
 }
 
-async function login(email, password) {
-  const res = await fetch(`${EXPRESS_BASE}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data?.message || `Login failed (${res.status})`);
-  }
-  if (!data?.token) throw new Error('No token returned from server.');
-  return data.token;
+function setButtonState(btn, loading) {
+  if (!btn) return;
+  btn.disabled = loading;
+  btn.textContent = loading ? 'Signing in…' : 'Log in';
 }
 
 async function init() {
   const form = document.getElementById('loginForm');
-  const btn = document.getElementById('loginBtn');
+  const btn  = document.getElementById('loginBtn');
   if (!form || !btn) return;
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     setError('');
-    btn.disabled = true;
-    const prev = btn.textContent;
-    btn.textContent = 'Logging in…';
+    setButtonState(btn, true);
 
-    const email = document.getElementById('email')?.value?.trim() || '';
+    const email    = (document.getElementById('email')?.value || '').trim();
     const password = document.getElementById('password')?.value || '';
 
+    if (!email || !password) {
+      setError('Email and password are required.');
+      setButtonState(btn, false);
+      return;
+    }
+
     try {
-      const token = await login(email, password);
-      setToken(token);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        // Map Supabase error messages to friendly ones
+        const msg = error.message?.toLowerCase() || '';
+        if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
+          throw new Error('Incorrect email or password. Please try again.');
+        }
+        if (msg.includes('email not confirmed')) {
+          throw new Error('Please confirm your email before signing in.');
+        }
+        throw new Error(error.message || 'Sign in failed. Please try again.');
+      }
+
+      if (!data?.session) throw new Error('No session returned. Please try again.');
+
+      // Supabase stores the session automatically — go straight to the app
       window.location.replace('newindex.html');
+
     } catch (err) {
-      setError(err?.message || 'Login failed.');
+      setError(err?.message || 'Sign in failed. Please try again.');
     } finally {
-      btn.disabled = false;
-      btn.textContent = prev;
+      setButtonState(btn, false);
     }
   });
 }
@@ -55,8 +69,6 @@ if (new URLSearchParams(window.location.search).get('verified') === '1') {
   document.addEventListener('DOMContentLoaded', () => {
     const banner = document.getElementById('verifiedBanner');
     if (banner) banner.classList.remove('hidden');
-    // Pre-fill email if stored from signup flow
-    // (email is cleared in signup.js before redirect, so this is a best-effort)
   });
 }
 
@@ -65,4 +77,3 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
-
