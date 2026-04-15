@@ -108,9 +108,6 @@
         background: #690008;
         width: 0%;
       }
-      /* Step transition */
-      .signup-step { transition: opacity 0.2s ease, transform 0.2s ease; }
-      .signup-step.hidden-step { opacity: 0; transform: translateY(6px); pointer-events: none; position: absolute; top: 0; left: 0; right: 0; }
     </style>
 
     <link href="styles.css" rel="stylesheet" />
@@ -132,17 +129,30 @@
     <main class="pt-32 pb-24 px-6">
       <div class="max-w-lg mx-auto">
 
-        <!-- Step 1: Registration form -->
-        <div id="stepRegister" class="bg-surface-container-lowest rounded-xl editorial-shadow p-10 relative">
+        <!-- Step indicator -->
+        <div class="flex items-center gap-3 mb-8 justify-center" id="stepIndicator">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label transition-all" id="dot1"></div>
+            <span class="font-label text-[10px] uppercase tracking-widest opacity-50" id="dotLabel1">Credentials</span>
+          </div>
+          <div class="w-8 h-px bg-on-surface/20"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label transition-all" id="dot2"></div>
+            <span class="font-label text-[10px] uppercase tracking-widest opacity-50" id="dotLabel2">Your profile</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Email + Password -->
+        <div id="stepCredentials" class="bg-surface-container-lowest rounded-xl editorial-shadow p-10">
           <div class="mb-10">
-            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Welcome</p>
+            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Step 1 of 2</p>
             <h1 class="font-headline text-4xl italic leading-tight">Create your account</h1>
             <p class="font-body text-on-surface-variant mt-3 text-sm leading-relaxed">
               Join Catalog to track, discover, and share the restaurants you love.
             </p>
           </div>
 
-          <form id="signupForm" class="space-y-6" novalidate>
+          <form id="credentialsForm" class="space-y-6" novalidate>
             <!-- Email -->
             <div>
               <label class="block font-label text-sm font-bold mb-2" for="email">Email</label>
@@ -155,6 +165,7 @@
                 placeholder="you@example.com"
                 required
               />
+              <p class="font-label text-sm text-error mt-2 hidden" id="emailError"></p>
             </div>
 
             <!-- Password -->
@@ -210,12 +221,12 @@
             <div class="pt-2">
               <button
                 class="w-full bg-primary text-on-primary py-4 px-8 rounded-full font-label text-sm font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow"
-                id="signupBtn"
+                id="nextBtn"
                 type="submit"
               >
-                Create account
+                Next
               </button>
-              <p class="font-label text-sm text-error mt-4 hidden" id="signupError"></p>
+              <p class="font-label text-sm text-error mt-4 hidden" id="credentialsError"></p>
             </div>
           </form>
 
@@ -225,53 +236,69 @@
           </p>
         </div>
 
-        <!-- Step 2: OTP verification -->
-        <div id="stepOtp" class="hidden bg-surface-container-lowest rounded-xl editorial-shadow p-10">
+        <!-- Step 2: Name + Username -->
+        <div id="stepProfile" class="hidden bg-surface-container-lowest rounded-xl editorial-shadow p-10">
           <div class="mb-10">
-            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">One more step</p>
-            <h1 class="font-headline text-4xl italic leading-tight">Check your email</h1>
-            <p class="font-body text-on-surface-variant mt-3 text-sm leading-relaxed" id="otpHint">
-              We sent a 4-digit code to your email. Enter it below to activate your account.
+            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Step 2 of 2</p>
+            <h1 class="font-headline text-4xl italic leading-tight">Tell us about you</h1>
+            <p class="font-body text-on-surface-variant mt-3 text-sm leading-relaxed">
+              How should other food lovers know you on Catalog?
             </p>
           </div>
 
-          <form id="otpForm" class="space-y-6" novalidate>
+          <form id="profileForm" class="space-y-6" novalidate>
+            <!-- Full Name -->
             <div>
-              <label class="block font-label text-sm font-bold mb-2" for="otpCode">Verification code</label>
+              <label class="block font-label text-sm font-bold mb-2" for="fullName">Full name</label>
               <input
-                class="w-full bg-surface-container-lowest py-4 px-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body text-center tracking-[0.4em] placeholder:tracking-normal placeholder:text-on-surface-variant/40"
-                id="otpCode"
-                name="otpCode"
+                class="w-full bg-surface-container-lowest py-4 px-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                id="fullName"
+                name="fullName"
                 type="text"
-                inputmode="numeric"
-                pattern="[0-9]{4}"
-                maxlength="4"
-                autocomplete="one-time-code"
-                placeholder="0000"
+                autocomplete="name"
+                placeholder="e.g. Alex Johnson"
                 required
               />
+              <p class="font-label text-sm text-error mt-2 hidden" id="fullNameError"></p>
             </div>
 
-            <div class="pt-2">
+            <!-- Username -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="username">Username</label>
+              <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 font-label text-on-surface-variant/50 text-base select-none">@</span>
+                <input
+                  class="w-full bg-surface-container-lowest py-4 pl-9 pr-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                  id="username"
+                  name="username"
+                  type="text"
+                  autocomplete="username"
+                  placeholder="yourhandle"
+                  required
+                />
+              </div>
+              <p class="font-label text-[11px] opacity-50 mt-1.5">Letters, numbers, and underscores only.</p>
+              <p class="font-label text-sm text-error mt-2 hidden" id="usernameError"></p>
+            </div>
+
+            <div class="pt-2 flex flex-col gap-3">
               <button
                 class="w-full bg-primary text-on-primary py-4 px-8 rounded-full font-label text-sm font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow"
-                id="otpBtn"
+                id="createAccountBtn"
                 type="submit"
               >
-                Verify &amp; continue
+                Create account
               </button>
-              <p class="font-label text-sm text-error mt-4 hidden" id="otpError"></p>
+              <button
+                class="w-full text-on-surface-variant py-3 px-8 rounded-full font-label text-sm tracking-widest hover:opacity-70 transition-opacity"
+                id="backToCredentials"
+                type="button"
+              >
+                ← Back
+              </button>
+              <p class="font-label text-sm text-error mt-2 hidden" id="profileError"></p>
             </div>
           </form>
-
-          <div class="mt-8 flex items-center justify-between">
-            <button class="font-label text-xs opacity-50 hover:opacity-80 transition-opacity underline" id="backToSignup" type="button">
-              Use a different email
-            </button>
-            <button class="font-label text-xs opacity-50 hover:opacity-80 transition-opacity underline" id="resendOtp" type="button">
-              Resend code
-            </button>
-          </div>
         </div>
 
       </div>
@@ -287,6 +314,7 @@
       </div>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <script type="module" src="./signup.js"></script>
   </body>
 </html>

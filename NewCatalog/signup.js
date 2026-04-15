@@ -1,9 +1,10 @@
-// signup.js — two-step registration: form submission → OTP verification.
-// Backend endpoints (server.js):
-//   POST /signup      { email, password } → sends OTP email
-//   POST /verify-otp  { email, otp }      → verifies and activates account
+// signup.js — two-step registration (no OTP).
+// Step 1: email + password validation → Next
+// Step 2: full name + username → Create account via Supabase
 
-import { EXPRESS_BASE, STORAGE_KEYS } from './config.js';
+import { getSupabaseClient } from './supabase-client.js';
+
+const supabase = getSupabaseClient();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -14,9 +15,7 @@ function setError(id, message) {
   el.classList.toggle('hidden', !message);
 }
 
-function clearError(id) {
-  setError(id, '');
-}
+function clearError(id) { setError(id, ''); }
 
 function setButtonState(btn, loading, label) {
   if (!btn) return;
@@ -24,224 +23,231 @@ function setButtonState(btn, loading, label) {
   btn.textContent = label;
 }
 
+function isValidEmail(email) {
+  // RFC-5322-ish: must have local@domain.tld with no spaces
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+}
+
+function isValidUsername(username) {
+  return /^[a-zA-Z0-9_]{3,30}$/.test(username);
+}
+
 // ─── Password strength ────────────────────────────────────────────────────────
 
 const STRENGTH_LEVELS = [
-  { min: 0,  max: 3,  label: '',           color: '#690008', width: '0%'   },
-  { min: 1,  max: 3,  label: 'Weak',       color: '#c62828', width: '25%'  },
-  { min: 3,  max: 5,  label: 'Fair',       color: '#e65100', width: '50%'  },
-  { min: 5,  max: 7,  label: 'Good',       color: '#2e7d32', width: '75%'  },
-  { min: 7,  max: 99, label: 'Strong',     color: '#1b5e20', width: '100%' },
+  { min: 0,  label: '',       color: '#690008', width: '0%'   },
+  { min: 1,  label: 'Weak',   color: '#c62828', width: '25%'  },
+  { min: 3,  label: 'Fair',   color: '#e65100', width: '50%'  },
+  { min: 5,  label: 'Good',   color: '#2e7d32', width: '75%'  },
+  { min: 7,  label: 'Strong', color: '#1b5e20', width: '100%' },
 ];
 
 function scorePassword(pw) {
   if (!pw) return 0;
   let score = 0;
-  if (pw.length >= 8)  score += 1;
-  if (pw.length >= 12) score += 1;
-  if (/[A-Z]/.test(pw)) score += 1;
-  if (/[a-z]/.test(pw)) score += 1;
-  if (/[0-9]/.test(pw)) score += 1;
-  if (/[^A-Za-z0-9]/.test(pw)) score += 2;
+  if (pw.length >= 8)            score += 1;
+  if (pw.length >= 12)           score += 1;
+  if (/[A-Z]/.test(pw))         score += 1;
+  if (/[a-z]/.test(pw))         score += 1;
+  if (/[0-9]/.test(pw))         score += 1;
+  if (/[^A-Za-z0-9]/.test(pw))  score += 2;
   return score;
 }
 
 function updateStrengthBar(password) {
-  const bar = document.getElementById('strengthBar');
+  const bar   = document.getElementById('strengthBar');
   const label = document.getElementById('strengthLabel');
   if (!bar) return;
-
   const score = scorePassword(password);
-  const level = STRENGTH_LEVELS.findLast((l) => score >= l.min) || STRENGTH_LEVELS[0];
-
-  bar.style.width = password ? level.width : '0%';
+  const level = [...STRENGTH_LEVELS].reverse().find(l => score >= l.min) || STRENGTH_LEVELS[0];
+  bar.style.width           = password ? level.width : '0%';
   bar.style.backgroundColor = level.color;
   if (label) label.textContent = password ? level.label : '';
 }
 
-// ─── Toggle password visibility ───────────────────────────────────────────────
+// ─── Password toggle ──────────────────────────────────────────────────────────
 
-function wirePasswordToggle(inputId, toggleBtnId) {
+function wirePasswordToggle(inputId, btnId) {
   const input = document.getElementById(inputId);
-  const btn = document.getElementById(toggleBtnId);
+  const btn   = document.getElementById(btnId);
   if (!input || !btn) return;
   btn.addEventListener('click', () => {
     const isText = input.type === 'text';
-    input.type = isText ? 'password' : 'text';
+    input.type   = isText ? 'password' : 'text';
     btn.textContent = isText ? 'visibility_off' : 'visibility';
-    btn.setAttribute('aria-label', isText ? 'Show password' : 'Hide password');
   });
 }
 
 // ─── Step management ──────────────────────────────────────────────────────────
 
-function showStep(stepId) {
-  for (const id of ['stepRegister', 'stepOtp']) {
-    const el = document.getElementById(id);
-    if (!el) continue;
-    el.classList.toggle('hidden', id !== stepId);
+function showStep(step) {
+  document.getElementById('stepCredentials').classList.toggle('hidden', step !== 1);
+  document.getElementById('stepProfile').classList.toggle('hidden', step !== 2);
+
+  // Update step dots
+  const dot1 = document.getElementById('dot1');
+  const dot2 = document.getElementById('dot2');
+  if (dot1) {
+    dot1.className = step === 1
+      ? 'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label bg-primary text-white'
+      : 'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label bg-primary/20 text-primary';
+    dot1.textContent = step > 1 ? '✓' : '1';
+  }
+  if (dot2) {
+    dot2.className = step === 2
+      ? 'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label bg-primary text-white'
+      : 'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label bg-surface-container-high text-on-surface-variant';
+    dot2.textContent = '2';
   }
 }
 
-// ─── API calls ────────────────────────────────────────────────────────────────
+// ─── In-memory state ──────────────────────────────────────────────────────────
 
-async function apiSignup(email, password) {
-  const res = await fetch(`${EXPRESS_BASE}/signup`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || `Signup failed (${res.status})`);
-  return data;
-}
-
-async function apiVerifyOtp(email, otp) {
-  const res = await fetch(`${EXPRESS_BASE}/verify-otp`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, otp }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message || `Verification failed (${res.status})`);
-  return data;
-}
+let _email    = '';
+let _password = '';
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
-let _pendingEmail = '';
-
 function init() {
-  // Step 1 — Registration form
-  const signupForm = document.getElementById('signupForm');
-  const signupBtn  = document.getElementById('signupBtn');
-  const passwordEl = document.getElementById('password');
-  const confirmEl  = document.getElementById('confirmPassword');
+  showStep(1);
 
   wirePasswordToggle('password', 'togglePassword');
   wirePasswordToggle('confirmPassword', 'toggleConfirmPassword');
+
+  const passwordEl = document.getElementById('password');
+  const confirmEl  = document.getElementById('confirmPassword');
+  const emailEl    = document.getElementById('email');
 
   passwordEl?.addEventListener('input', () => {
     updateStrengthBar(passwordEl.value);
     clearError('confirmPasswordError');
   });
-
   confirmEl?.addEventListener('input', () => clearError('confirmPasswordError'));
+  emailEl?.addEventListener('input', () => clearError('emailError'));
 
-  signupForm?.addEventListener('submit', async (e) => {
+  // ── Step 1: credentials ──────────────────────────────────────────────────
+
+  document.getElementById('credentialsForm')?.addEventListener('submit', (e) => {
     e.preventDefault();
-    clearError('signupError');
+    clearError('credentialsError');
+    clearError('emailError');
     clearError('confirmPasswordError');
 
-    const email    = (document.getElementById('email')?.value || '').trim();
+    const email    = (emailEl?.value || '').trim();
     const password = passwordEl?.value || '';
     const confirm  = confirmEl?.value  || '';
 
-    if (!email || !password) {
-      setError('signupError', 'Email and password are required.');
+    if (!email) {
+      setError('emailError', 'Email is required.');
+      emailEl?.focus();
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setError('emailError', 'Please enter a valid email address.');
+      emailEl?.focus();
+      return;
+    }
+    if (!password) {
+      setError('credentialsError', 'Password is required.');
       return;
     }
     if (password.length < 8) {
-      setError('signupError', 'Password must be at least 8 characters.');
+      setError('credentialsError', 'Password must be at least 8 characters.');
       return;
     }
     if (password !== confirm) {
       setError('confirmPasswordError', "Passwords don't match.");
+      confirmEl?.focus();
       return;
     }
 
-    setButtonState(signupBtn, true, 'Creating account…');
-    try {
-      await apiSignup(email, password);
-      _pendingEmail = email;
-      localStorage.setItem(STORAGE_KEYS.signupEmail, email);
+    // Store for step 2
+    _email    = email;
+    _password = password;
+    showStep(2);
+    document.getElementById('fullName')?.focus();
+  });
 
-      // Update OTP hint with masked email
-      const hint = document.getElementById('otpHint');
-      if (hint) {
-        const [local, domain] = email.split('@');
-        const masked = local.length > 2
-          ? `${local[0]}${'*'.repeat(Math.min(local.length - 2, 4))}${local.at(-1)}@${domain}`
-          : email;
-        hint.textContent = `We sent a 4-digit code to ${masked}. Enter it below to activate your account.`;
+  // ── Step 2: profile ──────────────────────────────────────────────────────
+
+  const createBtn = document.getElementById('createAccountBtn');
+
+  document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError('profileError');
+    clearError('fullNameError');
+    clearError('usernameError');
+
+    const fullName = (document.getElementById('fullName')?.value || '').trim();
+    const username = (document.getElementById('username')?.value || '').trim().toLowerCase();
+
+    if (!fullName) {
+      setError('fullNameError', 'Please enter your full name.');
+      document.getElementById('fullName')?.focus();
+      return;
+    }
+    if (!username) {
+      setError('usernameError', 'Please choose a username.');
+      document.getElementById('username')?.focus();
+      return;
+    }
+    if (!isValidUsername(username)) {
+      setError('usernameError', 'Username must be 3–30 characters: letters, numbers, underscores only.');
+      document.getElementById('username')?.focus();
+      return;
+    }
+
+    setButtonState(createBtn, true, 'Creating account…');
+
+    try {
+      // Sign up via Supabase Auth — stores name + username in user_metadata
+      const { data, error } = await supabase.auth.signUp({
+        email: _email,
+        password: _password,
+        options: {
+          data: {
+            full_name: fullName,
+            username: username,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      // Insert into profiles table if the user object is available
+      // (Supabase may return a user immediately if email confirmation is off,
+      //  or a session-less user if confirmation is on)
+      const userId = data?.user?.id;
+      if (userId) {
+        await supabase.from('profiles').upsert({
+          id:        userId,
+          email:     _email,
+          full_name: fullName,
+          username:  username,
+        }, { onConflict: 'id' });
       }
 
-      showStep('stepOtp');
-      document.getElementById('otpCode')?.focus();
+      // Redirect to login with a success flag
+      window.location.replace('login.html?verified=1');
+
     } catch (err) {
-      setError('signupError', err?.message || 'Signup failed. Please try again.');
+      const msg = err?.message || 'Something went wrong. Please try again.';
+      // Surface friendly messages for common errors
+      if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
+        setError('profileError', 'An account with this email already exists. Try signing in.');
+      } else {
+        setError('profileError', msg);
+      }
     } finally {
-      setButtonState(signupBtn, false, 'Create account');
+      setButtonState(createBtn, false, 'Create account');
     }
   });
 
-  // Step 2 — OTP verification
-  const otpForm = document.getElementById('otpForm');
-  const otpBtn  = document.getElementById('otpBtn');
-
-  otpForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearError('otpError');
-
-    const otp = (document.getElementById('otpCode')?.value || '').trim();
-    if (!otp || otp.length !== 4) {
-      setError('otpError', 'Enter the 4-digit code from your email.');
-      return;
-    }
-
-    const email = _pendingEmail || localStorage.getItem(STORAGE_KEYS.signupEmail) || '';
-    if (!email) {
-      setError('otpError', 'Session expired. Please start again.');
-      showStep('stepRegister');
-      return;
-    }
-
-    setButtonState(otpBtn, true, 'Verifying…');
-    try {
-      await apiVerifyOtp(email, otp);
-      localStorage.removeItem(STORAGE_KEYS.signupEmail);
-      // Account verified — redirect to login with success hint
-      window.location.replace(`login.html?verified=1`);
-    } catch (err) {
-      setError('otpError', err?.message || 'Verification failed. Check the code and try again.');
-    } finally {
-      setButtonState(otpBtn, false, 'Verify & continue');
-    }
+  // Back button
+  document.getElementById('backToCredentials')?.addEventListener('click', () => {
+    clearError('profileError');
+    showStep(1);
   });
-
-  // Back to signup
-  document.getElementById('backToSignup')?.addEventListener('click', () => {
-    clearError('otpError');
-    showStep('stepRegister');
-  });
-
-  // Resend OTP
-  const resendBtn = document.getElementById('resendOtp');
-  resendBtn?.addEventListener('click', async () => {
-    const email = _pendingEmail || localStorage.getItem(STORAGE_KEYS.signupEmail) || '';
-    if (!email) { showStep('stepRegister'); return; }
-
-    resendBtn.disabled = true;
-    resendBtn.textContent = 'Sending…';
-    clearError('otpError');
-
-    try {
-      const pw = document.getElementById('password')?.value || '';
-      if (pw) await apiSignup(email, pw);
-    } catch {
-      // ignore — server may say "already exists", which is fine; OTP is resent
-    } finally {
-      resendBtn.disabled = false;
-      resendBtn.textContent = 'Resend code';
-    }
-  });
-
-  // Handle ?verified=1 redirect from login.html (shows success banner there)
-  // Also support returning to this page for any step restoration
-  const savedEmail = localStorage.getItem(STORAGE_KEYS.signupEmail);
-  if (savedEmail) {
-    _pendingEmail = savedEmail;
-  }
 }
 
 if (document.readyState === 'loading') {
