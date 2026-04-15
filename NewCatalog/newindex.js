@@ -2,9 +2,10 @@
 // Goal for this step: auth-gate + nav avatar/dropdown/logout wiring.
 // Next step will populate dynamic sections (popular, friend activity, lists, etc.).
 
-import { requireAuth, logout, getToken } from './auth.js';
+import { fetchCurrentUser, logout, getToken } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 import { getSupabaseClient } from './supabase-client.js';
+import { startProgress, finishProgress } from './progress.js';
 
 
 function escapeHtml(value) {
@@ -24,19 +25,30 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
 
-  const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
+  // ── Unauthenticated: show "Sign in" link ──────────────────────────────
+  if (!user) {
+    accountBtn.setAttribute('aria-label', 'Sign in');
+    accountBtn.textContent = '';
+    const signInChip = document.createElement('a');
+    signInChip.href = 'login.html';
+    signInChip.className =
+      'inline-flex items-center gap-1.5 font-label text-xs font-bold tracking-widest uppercase text-primary hover:opacity-80 transition-opacity';
+    signInChip.textContent = 'Sign in';
+    accountBtn.appendChild(signInChip);
+    return;
+  }
 
-  // Keep the existing button in the DOM, but replace the glyph with an editorial avatar chip.
+  // ── Authenticated: avatar chip + dropdown ─────────────────────────────
+  const initial = (user.username || 'U')[0]?.toUpperCase?.() || 'U';
   accountBtn.setAttribute('aria-label', 'Account menu');
   accountBtn.textContent = '';
 
   const chip = document.createElement('div');
   chip.className =
-    'w-10 h-10 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-sm font-bold';
+    'w-10 h-10 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-sm font-bold cursor-pointer';
   chip.textContent = initial;
   accountBtn.appendChild(chip);
 
-  // Dropdown (injected so we don't have to change the Stitch HTML structure)
   const menu = document.createElement('div');
   menu.id = 'navAccountMenu';
   menu.className =
@@ -45,13 +57,13 @@ function ensureAccountDropdown({ user }) {
     <div class="flex items-center gap-4 mb-4">
       <div class="w-12 h-12 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-base font-bold">${escapeHtml(initial)}</div>
       <div class="min-w-0">
-        <div class="font-label font-bold text-sm truncate">${escapeHtml(user?.username || 'User')}</div>
-        <div class="font-label text-xs opacity-60 truncate">${escapeHtml(user?.email || '')}</div>
+        <div class="font-label font-bold text-sm truncate">${escapeHtml(user.username || 'User')}</div>
+        <div class="font-label text-xs opacity-60 truncate">${escapeHtml(user.email || '')}</div>
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
     <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
-      user?.id ?? ''
+      user.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
   `.trim();
@@ -77,8 +89,7 @@ function ensureAccountDropdown({ user }) {
   accountBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const isHidden = menu.classList.contains('hidden');
-    setOpen(isHidden);
+    setOpen(menu.classList.contains('hidden'));
   });
 
   document.addEventListener('click', () => setOpen(false));
@@ -86,16 +97,12 @@ function ensureAccountDropdown({ user }) {
   window.addEventListener('resize', () => {
     if (!menu.classList.contains('hidden')) positionMenu();
   });
-  window.addEventListener(
-    'scroll',
-    () => {
-      if (!menu.classList.contains('hidden')) positionMenu();
-    },
-    { passive: true }
-  );
+  window.addEventListener('scroll', () => {
+    if (!menu.classList.contains('hidden')) positionMenu();
+  }, { passive: true });
 
   menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => {
-    logout('login.html');
+    logout('newindex.html'); // redirect to homepage (public), not login
   });
 }
 
@@ -683,7 +690,7 @@ async function hydrateFriendActivity({ token }) {
   const activity = Array.isArray(data?.activity) ? data.activity.slice(0, 3) : [];
   if (!activity.length) {
     els.grid.innerHTML = `
-      <div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow">
+      <div class="catalog-glass p-8 rounded-xl">
         <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">No activity yet</p>
         <p class="font-body text-on-surface-variant leading-relaxed">Add friends to see where they’re dining.</p>
         <a class="font-label text-sm font-bold inline-block mt-5 text-primary border-b border-primary/40 hover:border-primary transition-colors" href="friends.html">Find Friends →</a>
@@ -725,7 +732,7 @@ async function hydrateFriendActivity({ token }) {
     if (!target) {
       // Create a fresh card if we ran out of placeholders.
       const card = document.createElement('div');
-      card.className = 'bg-surface-container-lowest p-8 rounded-xl editorial-shadow';
+      card.className = 'catalog-glass p-8 rounded-xl';
       els.grid.appendChild(card);
       cardSlots.push(card);
     }
@@ -816,7 +823,7 @@ async function hydrateRecentlyVisited({ token, userId }) {
   const list = Array.isArray(visits) ? visits : [];
   if (!list.length) {
     els.row.innerHTML = `
-      <div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow w-full">
+      <div class="catalog-glass p-8 rounded-xl w-full">
         <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">No visits yet</p>
         <p class="font-body text-on-surface-variant leading-relaxed">Start logging restaurants to build your history.</p>
       </div>
@@ -868,9 +875,9 @@ async function hydrateRecentlyVisited({ token, userId }) {
 }
 
 async function init() {
-  // Auth gate (per rebuild requirements)
-  const user = await requireAuth({ redirectTo: 'login.html' });
-  if (!user) return;
+  startProgress();
+  // Optional auth — homepage is public. Protected sections degrade gracefully for guests.
+  const user = await fetchCurrentUser({ redirectOnFail: null });
 
   ensureAccountDropdown({ user });
   ensureViewAllLink();
@@ -896,13 +903,15 @@ async function init() {
   // Step 2: Search dropdown (FastAPI-backed)
   setupHomeSearch();
 
-  // Next sections: Friend activity + recent visits
+  finishProgress();
+
+  // Next sections: Friend activity + recent visits (auth-gated; guests see empty states)
   const token = getToken();
   if (token && user?.id != null) {
     hydrateFriendActivity({ token }).catch(() => {});
     hydrateRecentlyVisited({ token, userId: user.id }).catch(() => {});
 
-    // Next step: Curated Lists + The Journal
+    // Curated Lists + The Journal
     hydrateCuratedLists({ token }).catch(() => {});
     hydrateJournal().catch(() => {});
   }

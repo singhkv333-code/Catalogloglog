@@ -3,6 +3,7 @@
 
 import { requireAuth, getToken, logout } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
+import { startProgress, finishProgress } from './progress.js';
 
 // Used by `restaurant.html` to detect whether the module script loaded at all.
 window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = true;
@@ -417,8 +418,14 @@ function openPhotoGalleryModal({ photos, title }) {
   document.body.appendChild(overlay);
 }
 
+// ─── Hours parsing & display ──────────────────────────────────────────────────
+
+const DAYS_FULL  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_ABBR  = ['sun','mon','tue','wed','thu','fri','sat'];
+
 function parseTime12(value) {
-  const m = String(value || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i);
+  const m = String(value || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)$/i);
   if (!m) return null;
   let h = Number(m[1]);
   const min = Number(m[2] || 0);
@@ -428,21 +435,261 @@ function parseTime12(value) {
   return h * 60 + min;
 }
 
+/** Normalise e.g. "9am", "9:30am", "9:30 AM" → "9:30 AM" */
+function formatTime12(value) {
+  const m = String(value || '').trim().match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)$/i);
+  if (!m) return String(value || '').trim();
+  const h = Number(m[1]);
+  const min = m[2] ? `:${m[2].padStart(2,'0')}` : '';
+  return `${h}${min} ${String(m[3]).toUpperCase()}`;
+}
+
+/** Parse "HH:MM" 24h → minutes */
+function parseTime24(value) {
+  const m = String(value || '').trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+/** Convert 24h "HH:MM" → "H:MM AM/PM" */
+function time24To12(value) {
+  const mins = parseTime24(value);
+  if (mins == null) return value;
+  const h = Math.floor(mins / 60) % 24;
+  const m = mins % 60;
+  const suffix = h < 12 ? 'AM' : 'PM';
+  const hDisplay = h % 12 === 0 ? 12 : h % 12;
+  return `${hDisplay}${m ? `:${String(m).padStart(2,'0')}` : ''} ${suffix}`;
+}
+
+function dayNameToIndex(name) {
+  const n = String(name || '').trim().toLowerCase().slice(0, 3);
+  const i = DAYS_ABBR.indexOf(n);
+  return i >= 0 ? i : -1;
+}
+
+/**
+ * Parse an opening_hours string into a per-day map: { 0: "12:00 PM – 10:00 PM", … } (0=Sun).
+ * Handles several common formats without strict validation.
+ */
+function parseOpeningHours(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  if (!s || s.length < 3) return null;
+
+  const result = {}; // dayIndex → time-range string or 'Closed'
+
+  // Normalise dashes to en-dash for consistency
+  const normalised = s
+    .replace(/–|—|‒/g, '–')
+    .replace(/\r?\n/g, ', ');
+
+  // ── Format 1: "Daily: HH:MM – HH:MM" or "All week HH:MM – HH:MM" ────────
+  const dailyMatch = normalised.match(
+    /(?:daily|all\s+week|everyday|every\s+day)[:\s]+(.+)/i
+  );
+  if (dailyMatch) {
+    const range = parseTimeRange(dailyMatch[1]);
+    if (range) {
+      for (let d = 0; d < 7; d++) result[d] = range;
+      return result;
+    }
+  }
+
+  // ── Format 2: comma-separated segments "Mon–Fri: 9 AM – 10 PM, Sat–Sun: Closed" ─
+  const segments = normalised.split(/,\s*/);
+  let parsedAny = false;
+
+  for (const seg of segments) {
+    const trimmed = seg.trim();
+    if (!trimmed) continue;
+
+    // "DayA–DayB: range" or "DayA,DayB: range" or "DayA: range"
+    const segMatch = trimmed.match(
+      /^([A-Za-z]+(?:\s*[–\-,]\s*[A-Za-z]+)?)\s*[:\s]\s*(.+)$/
+    );
+    if (!segMatch) continue;
+
+    const [, dayPart, rangePart] = segMatch;
+    const range = /closed/i.test(rangePart) ? 'Closed' : parseTimeRange(rangePart);
+    if (!range) continue;
+
+    // Day range "Mon–Fri"
+    const dayRangeMatch = dayPart.match(/^([A-Za-z]+)\s*[–\-]\s*([A-Za-z]+)$/);
+    if (dayRangeMatch) {
+      const from = dayNameToIndex(dayRangeMatch[1]);
+      const to   = dayNameToIndex(dayRangeMatch[2]);
+      if (from >= 0 && to >= 0) {
+        // Handle wrap-around (Fri–Sun)
+        let d = from;
+        while (true) {
+          result[d] = range;
+          if (d === to) break;
+          d = (d + 1) % 7;
+        }
+        parsedAny = true;
+      }
+      continue;
+    }
+
+    // Single day or comma-separated days "Mon,Wed,Fri"
+    const dayNames = dayPart.split(/[,&]\s*/);
+    for (const dn of dayNames) {
+      const idx = dayNameToIndex(dn.trim());
+      if (idx >= 0) { result[idx] = range; parsedAny = true; }
+    }
+  }
+
+  if (parsedAny) return result;
+
+  // ── Format 3: plain time range "9 AM – 10 PM" (applies to all days) ─────
+  const simpleRange = parseTimeRange(normalised);
+  if (simpleRange && !/[A-Za-z]{2,}/.test(normalised.replace(/am|pm/gi, ''))) {
+    for (let d = 0; d < 7; d++) result[d] = simpleRange;
+    return result;
+  }
+
+  return null; // couldn't parse — caller will fall back to raw text
+}
+
+/** Extract a time range string from "9 AM – 10 PM", "9am-10pm", "09:00–22:00" etc. */
+function parseTimeRange(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+
+  // 12-hour: "9 AM – 10 PM" or "9am–10pm"
+  const match12 = s.match(
+    /(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))\s*[–\-–]\s*(\d{1,2}(?::\d{2})?\s*(?:AM|PM|am|pm))/i
+  );
+  if (match12) {
+    return `${formatTime12(match12[1])} – ${formatTime12(match12[2])}`;
+  }
+
+  // 24-hour: "09:00–22:00"
+  const match24 = s.match(/(\d{1,2}:\d{2})\s*[–\-]\s*(\d{1,2}:\d{2})/);
+  if (match24) {
+    return `${time24To12(match24[1])} – ${time24To12(match24[2])}`;
+  }
+
+  return null;
+}
+
+/**
+ * Determine open/closed for a given day time-range string and current time.
+ */
 function computeOpenStatus(hoursText, now = new Date()) {
   const t = String(hoursText || '').trim();
   if (!t || /closed/i.test(t)) return { isOpen: false, label: 'Closed' };
 
-  const parts = t.split(/[–-]/).map((p) => p.trim()).filter(Boolean);
-  if (parts.length < 2) return { isOpen: null, label: 'Hours' };
+  const parts = t.split('–').map((p) => p.trim()).filter(Boolean);
+  if (parts.length < 2) return { isOpen: null, label: null };
 
-  const openM = parseTime12(parts[0]);
+  const openM  = parseTime12(parts[0]);
   const closeM = parseTime12(parts[1]);
-  if (openM == null || closeM == null) return { isOpen: null, label: 'Hours' };
+  if (openM == null || closeM == null) return { isOpen: null, label: null };
 
   const mins = now.getHours() * 60 + now.getMinutes();
   const overnight = closeM < openM;
-  const isOpen = overnight ? mins >= openM || mins < closeM : mins >= openM && mins < closeM;
+  const isOpen = overnight
+    ? (mins >= openM || mins < closeM)
+    : (mins >= openM && mins < closeM);
   return { isOpen, label: isOpen ? 'Open now' : 'Closed' };
+}
+
+/**
+ * Render the hours card with a structured weekly grid.
+ * Highlights today, shows open/closed status chip.
+ */
+function renderHoursCard({ hoursRows, hoursPill, hoursNote, openingHours }) {
+  const now = new Date();
+  const todayIdx = now.getDay(); // 0=Sun … 6=Sat
+
+  if (!hoursRows) return;
+
+  if (!openingHours) {
+    hoursRows.innerHTML = `<div class="font-body text-sm opacity-50">Hours not available.</div>`;
+    if (hoursPill) hoursPill.classList.add('hidden');
+    return;
+  }
+
+  const parsed = parseOpeningHours(openingHours);
+
+  // ── Structured weekly display ──────────────────────────────────────────
+  if (parsed && Object.keys(parsed).length > 0) {
+    // Determine today's open/closed status
+    const todayRange = parsed[todayIdx];
+    const todayStatus = computeOpenStatus(todayRange || '');
+
+    // Show status pill
+    if (hoursPill) {
+      if (todayStatus.isOpen === true) {
+        hoursPill.textContent = 'Open now';
+        hoursPill.className = hoursPill.className.replace(/\bhidden\b/g, '').trim();
+        hoursPill.style.cssText = '';
+        hoursPill.classList.remove('hidden');
+        hoursPill.setAttribute('class',
+          'font-label text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full hours-status-open');
+      } else if (todayStatus.isOpen === false) {
+        hoursPill.textContent = todayRange === 'Closed' ? 'Closed today' : 'Closed now';
+        hoursPill.setAttribute('class',
+          'font-label text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full hours-status-closed');
+        hoursPill.classList.remove('hidden');
+      } else {
+        hoursPill.classList.add('hidden');
+      }
+    }
+
+    // Build weekly rows — display Mon→Sun order (Mon first)
+    const dayOrder = [1,2,3,4,5,6,0]; // Mon…Sat, Sun
+    hoursRows.innerHTML = dayOrder.map((di) => {
+      const isToday  = di === todayIdx;
+      const dayName  = DAYS_FULL[di];
+      const dayShort = DAYS_SHORT[di];
+      const range    = parsed[di];
+      const isClosed = !range || range === 'Closed';
+      const timeText = isClosed ? 'Closed' : range;
+
+      return `
+        <div class="hours-day-row${isToday ? ' is-today' : ''}">
+          <span class="hours-day-name" title="${escapeHtml(dayName)}">${escapeHtml(dayShort)}</span>
+          <span class="hours-day-time${isClosed ? ' hours-closed-text' : ''}">${escapeHtml(timeText)}</span>
+          ${isToday && todayStatus.isOpen !== null
+            ? `<span class="${todayStatus.isOpen ? 'hours-status-open' : 'hours-status-closed'}">${todayStatus.isOpen ? 'Open' : 'Closed'}</span>`
+            : '<span></span>'}
+        </div>
+      `.trim();
+    }).join('');
+
+    if (hoursNote) hoursNote.classList.add('hidden');
+    return;
+  }
+
+  // ── Fallback: render raw text but clean it up ──────────────────────────
+  const cleaned = openingHours
+    .replace(/\r?\n/g, ' · ')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+  // Still try to show open/closed from the raw string
+  const rawStatus = computeOpenStatus(openingHours);
+  if (hoursPill) {
+    if (rawStatus.isOpen === true) {
+      hoursPill.textContent = 'Open now';
+      hoursPill.setAttribute('class',
+        'font-label text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full hours-status-open');
+      hoursPill.classList.remove('hidden');
+    } else if (rawStatus.isOpen === false) {
+      hoursPill.textContent = 'Closed now';
+      hoursPill.setAttribute('class',
+        'font-label text-[10px] font-bold tracking-widest uppercase px-3 py-1 rounded-full hours-status-closed');
+      hoursPill.classList.remove('hidden');
+    } else {
+      hoursPill.classList.add('hidden');
+    }
+  }
+
+  hoursRows.innerHTML = `<div class="font-body text-sm text-on-surface-variant leading-relaxed">${escapeHtml(cleaned)}</div>`;
+  if (hoursNote) hoursNote.classList.add('hidden');
 }
 
 function friendsBeenSummaryText(friends) {
@@ -609,9 +856,10 @@ async function hydrateFriendsBeenHere({ token, slug }) {
 }
 
 async function init() {
+  startProgress();
   window.__CATALOG_RESTAURANT_INIT_STARTED__ = true;
   const user = await requireAuth({ redirectTo: 'login.html' });
-  if (!user) return;
+  if (!user) { finishProgress(); return; }
   ensureAccountDropdown({ user });
 
   const token = getToken();
@@ -681,6 +929,13 @@ async function init() {
     if (meta) meta.textContent = msg;
     return;
   }
+
+  finishProgress();
+
+  // Use the integer primary key for all operational API calls (visits, bookmarks,
+  // ratings, reviews, list membership) so that chain restaurants (same name,
+  // different branches) are tracked independently.
+  const restaurantId = String(restaurant.id);
 
   document.title = `${restaurant?.name || 'Restaurant'} — Catalog`;
   document.getElementById('restaurantName').textContent = restaurant?.name || 'Restaurant';
@@ -771,30 +1026,12 @@ async function init() {
   }
 
   // Hours — sourced from `opening_hours` column in Supabase
-  const hoursCard = document.getElementById('hoursCard');
-  const hoursRows = document.getElementById('hoursRows');
-  const hoursPill = document.getElementById('hoursStatusPill');
-  const hoursNote = document.getElementById('hoursNote');
-
-  const openingHours = restaurant?.opening_hours ?? null;
-
-  if (hoursRows) {
-    if (openingHours) {
-      hoursRows.innerHTML = `
-        <div class="font-body text-sm text-on-surface-variant leading-relaxed">${escapeHtml(openingHours)}</div>
-      `.trim();
-    } else {
-      hoursRows.innerHTML = `<div class="font-body text-sm opacity-50">Hours not available.</div>`;
-    }
-  }
-
-  if (hoursPill) {
-    hoursPill.classList.add('hidden');
-  }
-
-  if (hoursNote) {
-    hoursNote.classList.add('hidden');
-  }
+  renderHoursCard({
+    hoursRows:    document.getElementById('hoursRows'),
+    hoursPill:    document.getElementById('hoursStatusPill'),
+    hoursNote:    document.getElementById('hoursNote'),
+    openingHours: restaurant?.opening_hours ?? null,
+  });
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -802,7 +1039,7 @@ async function init() {
   // Falls back to empty map so the page still loads if the endpoint fails.
   const likedMap = new Map();
   try {
-    const likedData = await fetchJson(`${FASTAPI_BASE}/api/reviews/${encodeURIComponent(slug)}/liked`, { headers });
+    const likedData = await fetchJson(`${FASTAPI_BASE}/api/reviews/${encodeURIComponent(restaurantId)}/liked`, { headers });
     (likedData?.liked_review_ids || []).forEach((id) => likedMap.set(String(id), true));
   } catch {
     // non-fatal — liked state just won't be pre-filled
@@ -814,7 +1051,7 @@ async function init() {
 
   async function refreshBeen() {
     try {
-      const d = await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(slug)}/check`, { headers });
+      const d = await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(restaurantId)}/check`, { headers });
       setBtnActive(beenBtn, !!d?.visited, { activeLabel: 'Been', inactiveLabel: 'Been' });
     } catch {
       setBtnActive(beenBtn, false, { activeLabel: 'Been', inactiveLabel: 'Been' });
@@ -823,7 +1060,7 @@ async function init() {
 
   async function refreshSaved() {
     try {
-      const d = await fetchJson(`${FASTAPI_BASE}/api/bookmarks/${encodeURIComponent(slug)}/check`, { headers });
+      const d = await fetchJson(`${FASTAPI_BASE}/api/bookmarks/${encodeURIComponent(restaurantId)}/check`, { headers });
       setBtnActive(savedBtn, !!d?.bookmarked, { activeLabel: 'Saved', inactiveLabel: 'Save' });
     } catch {
       setBtnActive(savedBtn, false, { activeLabel: 'Saved', inactiveLabel: 'Save' });
@@ -836,20 +1073,14 @@ async function init() {
     setBtnActive(beenBtn, !active, { activeLabel: 'Been', inactiveLabel: 'Been' });
     beenBtn.disabled = true;
     try {
-      await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(slug)}`, {
+      await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(restaurantId)}`, {
         method: active ? 'DELETE' : 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
-      // When un-beening, always remove the user's rating (regardless of cached star count)
+      // When un-beening the server also deletes rating/review; refresh local state
       if (active) {
-        try {
-          await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(slug)}`, {
-            method: 'DELETE',
-            headers,
-          });
-          currentUserStars = 0;
-        } catch {}
-        await refreshRatings();
+        currentUserStars = 0;
+        await Promise.all([refreshRatings(), loadReviews({ reset: true })]);
       }
     } catch {
       // Revert on failure
@@ -865,7 +1096,7 @@ async function init() {
     setBtnActive(savedBtn, !active, { activeLabel: 'Saved', inactiveLabel: 'Save' });
     savedBtn.disabled = true;
     try {
-      await fetchJson(`${FASTAPI_BASE}/api/bookmarks/${encodeURIComponent(slug)}`, {
+      await fetchJson(`${FASTAPI_BASE}/api/bookmarks/${encodeURIComponent(restaurantId)}`, {
         method: active ? 'DELETE' : 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
       });
@@ -890,7 +1121,7 @@ async function init() {
     let dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let totalRatings = 0;
     try {
-      const s = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(slug)}`);
+      const s = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}`);
       const avg = Number(s?.average_rating ?? 0);
       const total = Number(s?.total_ratings ?? 0);
       totalRatings = total;
@@ -905,7 +1136,7 @@ async function init() {
     updateRatingBreakdown(dist, totalRatings);
 
     try {
-      const u = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(slug)}/user`, { headers });
+      const u = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}/user`, { headers });
       currentUserStars = u?.rated ? Number(u?.stars ?? 0) : 0;
     } catch {
       currentUserStars = 0;
@@ -916,13 +1147,13 @@ async function init() {
         await fetchJson(`${FASTAPI_BASE}/api/ratings`, {
           method: 'POST',
           headers: { ...headers, 'Content-Type': 'application/json' },
-          body: { restaurant_id: slug, stars },
+          body: { restaurant_id: restaurantId, stars },
         });
         currentUserStars = stars;
         // Auto-mark as Been when a rating is given
         if (beenBtn?.dataset.active !== '1') {
           try {
-            await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(slug)}`, {
+            await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(restaurantId)}`, {
               method: 'POST',
               headers: { ...headers, 'Content-Type': 'application/json' },
             });
@@ -1076,7 +1307,7 @@ async function init() {
     let d;
     try {
       d = await fetchJson(
-        `${FASTAPI_BASE}/api/reviews/${encodeURIComponent(slug)}?limit=${limit}&offset=${offset}`
+        `${FASTAPI_BASE}/api/reviews/${encodeURIComponent(restaurantId)}?limit=${limit}&offset=${offset}`
       );
     } catch {
       if (reset) {
@@ -1526,7 +1757,7 @@ async function init() {
       await fetchJson(`${FASTAPI_BASE}/api/reviews`, {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: { restaurant_id: slug, content, rating: currentUserStars || null },
+        body: { restaurant_id: restaurantId, content, rating: currentUserStars || null },
       });
       reviewText.value = '';
       await Promise.all([refreshRatings(), loadReviews({ reset: true })]);
@@ -1615,14 +1846,14 @@ async function init() {
             fetchJson(`${FASTAPI_BASE}/api/lists/${encodeURIComponent(listId)}/items`, {
               method: 'POST',
               headers: { ...headers, 'Content-Type': 'application/json' },
-              body: { restaurant_id: slug, notes: null },
+              body: { restaurant_id: restaurantId, notes: null },
             })
           );
         }
         if (!want && has) {
           ops.push(
             fetchJson(
-              `${FASTAPI_BASE}/api/lists/${encodeURIComponent(listId)}/items/by-restaurant/${encodeURIComponent(slug)}`,
+              `${FASTAPI_BASE}/api/lists/${encodeURIComponent(listId)}/items/by-restaurant/${encodeURIComponent(restaurantId)}`,
               {
                 method: 'DELETE',
                 headers,
@@ -1651,7 +1882,7 @@ async function init() {
   addToListBtn?.addEventListener('click', async () => {
     addToListBtn.disabled = true;
     try {
-      const d = await fetchJson(`${FASTAPI_BASE}/api/restaurants/${encodeURIComponent(slug)}/in-lists`, {
+      const d = await fetchJson(`${FASTAPI_BASE}/api/restaurants/${encodeURIComponent(restaurantId)}/in-lists`, {
         headers,
       });
       const lists = Array.isArray(d?.lists) ? d.lists : [];

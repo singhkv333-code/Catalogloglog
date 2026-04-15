@@ -3,6 +3,7 @@
 
 import { getToken, fetchCurrentUser, logout } from './auth.js';
 import { getSupabaseClient } from './supabase-client.js';
+import { startProgress, finishProgress } from './progress.js';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
@@ -29,6 +30,65 @@ function formatDate(ts) {
 
 function uid(prefix = 'id') {
   return `${prefix}_${Math.random().toString(16).slice(2)}_${Date.now()}`;
+}
+
+// ─── Restaurant link cache (for blog hyperlinking) ────────────────────────────
+
+let _restaurantLinkCache = null;
+
+async function fetchRestaurantsForLinking() {
+  if (_restaurantLinkCache !== null) return _restaurantLinkCache;
+  try {
+    const supabase = getSupabaseClient();
+    // Select only 'name' — the restaurants table has no slug column; the slug
+    // is computed by the Express server as LOWER(REPLACE(name,' ','-')).
+    const { data, error } = await supabase
+      .from('restaurants')
+      .select('name')
+      .limit(500);
+    if (error) throw error;
+    _restaurantLinkCache = (Array.isArray(data) ? data : [])
+      .filter((r) => r?.name)
+      .map((r) => {
+        const name = String(r.name).trim();
+        // Mirror the server's slug formula exactly
+        const slug = name.toLowerCase().replace(/\s+/g, '-');
+        return { name, slug };
+      });
+  } catch {
+    _restaurantLinkCache = [];
+  }
+  return _restaurantLinkCache;
+}
+
+/**
+ * Replaces restaurant name mentions in already-HTML-escaped text with anchor links.
+ * Single-pass replacement prevents double-linking.
+ * Longer names are matched first to avoid partial matches (e.g. "Café Noir" before "Café").
+ */
+function linkifyRestaurants(escapedText, restaurants) {
+  if (!restaurants || !restaurants.length || !escapedText) return escapedText;
+
+  // Sort longest-first: longer names win over shorter substring matches
+  const sorted = [...restaurants].sort((a, b) => b.name.length - a.name.length);
+
+  const nameToLink = new Map();
+  const patterns = [];
+
+  for (const { name, slug } of sorted) {
+    const esc = escapeHtml(name); // match against already-escaped paragraph content
+    const key = esc.toLowerCase();
+    if (!esc || nameToLink.has(key)) continue;
+    const href = `restaurant.html?slug=${encodeURIComponent(slug)}`;
+    nameToLink.set(key, `<a href="${href}" class="catalog-restaurant-link">${esc}</a>`);
+    patterns.push(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  }
+
+  if (!patterns.length) return escapedText;
+
+  // Single combined regex — sorted longest-first in the alternation so greedy left wins
+  const combined = new RegExp(`(?<![\\w>])(${patterns.join('|')})(?![\\w<])`, 'gi');
+  return escapedText.replace(combined, (match) => nameToLink.get(match.toLowerCase()) || match);
 }
 
 // ─── Login overlay ────────────────────────────────────────────────────────────
@@ -314,14 +374,15 @@ function featuredCardHtml(post) {
 
 // ─── Post shell (individual article view) ────────────────────────────────────
 
-function postShellHtml(post) {
+function postShellHtml(post, { restaurants = [] } = {}) {
   const body = Array.isArray(post.body) && post.body.length ? post.body : [post.excerpt || ''];
   const paragraphs = body
     .filter((p) => String(p).trim())
-    .map(
-      (p) =>
-        `<p class="font-body text-[15px] md:text-[16px] leading-[1.85] opacity-90">${escapeHtml(String(p))}</p>`
-    )
+    .map((p) => {
+      const escaped = escapeHtml(String(p));
+      const linked = restaurants.length ? linkifyRestaurants(escaped, restaurants) : escaped;
+      return `<p class="font-body text-[15px] md:text-[16px] leading-[1.85] opacity-90">${linked}</p>`;
+    })
     .join('');
 
   const quoteHtml = post.quote
@@ -1090,7 +1151,56 @@ function filterPosts(posts, q) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
+// ─── Skeleton helpers ─────────────────────────────────────────────────────────
+
+function renderBlogIndexSkeletons(featuredEl, indexEl) {
+  if (featuredEl) {
+    featuredEl.innerHTML = `
+      <div class="catalog-skeleton skeleton-hero w-full"></div>
+    `;
+  }
+  if (indexEl) {
+    indexEl.innerHTML = Array.from({ length: 6 }).map(() => `
+      <div class="bg-surface-container-lowest rounded-2xl overflow-hidden editorial-shadow border border-on-surface/5 flex flex-col">
+        <div class="catalog-skeleton skeleton-thumb w-full flex-none"></div>
+        <div class="p-5 flex flex-col gap-3 flex-1">
+          <div class="catalog-skeleton skeleton-line-sm w-20"></div>
+          <div class="catalog-skeleton skeleton-line-lg w-3/4"></div>
+          <div class="catalog-skeleton skeleton-line w-full"></div>
+          <div class="catalog-skeleton skeleton-line w-5/6"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function renderBlogPostSkeleton(postView) {
+  postView.innerHTML = `
+    <div class="catalog-skeleton skeleton-line-sm w-24 mb-10"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+      <div class="lg:col-span-8 bg-surface-container-lowest rounded-3xl overflow-hidden editorial-shadow">
+        <div class="catalog-skeleton skeleton-thumb w-full" style="aspect-ratio:16/7"></div>
+        <div class="p-8 md:p-12 space-y-4">
+          <div class="catalog-skeleton skeleton-line-sm w-20"></div>
+          <div class="catalog-skeleton skeleton-line-2xl w-2/3"></div>
+          <div class="h-px bg-on-surface/10"></div>
+          <div class="catalog-skeleton skeleton-line w-full"></div>
+          <div class="catalog-skeleton skeleton-line w-11/12"></div>
+          <div class="catalog-skeleton skeleton-line w-4/5"></div>
+          <div class="catalog-skeleton skeleton-line w-full mt-4"></div>
+          <div class="catalog-skeleton skeleton-line w-9/12"></div>
+        </div>
+      </div>
+      <div class="lg:col-span-4 space-y-6 hidden lg:block">
+        <div class="catalog-skeleton rounded-2xl h-40"></div>
+        <div class="catalog-skeleton rounded-2xl h-52"></div>
+      </div>
+    </div>
+  `;
+}
+
 async function main() {
+  startProgress();
   wireLoginOverlay();
 
   const token = getToken();
@@ -1106,7 +1216,7 @@ async function main() {
   const searchEl = document.getElementById('blogSearch');
   const topicsEl = document.getElementById('blogTopics');
 
-  if (!indexMain || !postMain || !postView) return;
+  if (!indexMain || !postMain || !postView) { finishProgress(); return; }
 
   const params = new URLSearchParams(window.location.search);
   const slug = params.get('slug');
@@ -1115,8 +1225,14 @@ async function main() {
   if (slug) {
     indexMain.classList.add('hidden');
     postMain.classList.remove('hidden');
+    renderBlogPostSkeleton(postView);
 
-    const [post, allPosts] = await Promise.all([fetchPostBySlug(slug), fetchAllPosts()]);
+    const [post, allPosts, restaurants] = await Promise.all([
+      fetchPostBySlug(slug),
+      fetchAllPosts(),
+      fetchRestaurantsForLinking(),
+    ]);
+    finishProgress();
 
     if (!post) {
       postView.innerHTML = `
@@ -1130,7 +1246,7 @@ async function main() {
       return;
     }
 
-    postView.innerHTML = postShellHtml(post);
+    postView.innerHTML = postShellHtml(post, { restaurants });
     wireComments({ slug: post.slug, post, user }).catch(() => {});
     renderRelatedPosts(allPosts, post.slug);
     return;
@@ -1139,8 +1255,10 @@ async function main() {
   // ── Index view ────────────────────────────────────────────────────────
   indexMain.classList.remove('hidden');
   postMain.classList.add('hidden');
+  renderBlogIndexSkeletons(featuredEl, indexEl);
 
   const posts = await fetchAllPosts();
+  finishProgress();
   let activeTopic = 'all';
 
   function setActiveTopic(next) {

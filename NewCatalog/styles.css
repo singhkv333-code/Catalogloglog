@@ -113,3 +113,73 @@ input[type="checkbox"]:focus {
 .catalog-star.star-pop {
   animation: star-pop 220ms ease;
 }
+
+/* ─── Global top progress bar ──────────────────────────────────────────────── */
+#catalog-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 9999;
+  background: #690008; /* primary */
+  transform-origin: left;
+  transform: scaleX(0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#catalog-progress-bar.is-loading {
+  opacity: 1;
+  transform: scaleX(0.85);
+  transition: transform 10s cubic-bezier(0.05, 0.5, 0, 1), opacity 0.15s ease;
+}
+
+#catalog-progress-bar.is-done {
+  transform: scaleX(1) !important;
+  transition: transform 0.18s ease, opacity 0.3s ease 0.12s !important;
+  opacity: 0 !important;
+}
+
+/* ─── Skeleton size helpers (pair with .catalog-skeleton) ───────────────────── */
+.skeleton-line-sm   { height: 12px; border-radius: 6px; }
+.skeleton-line      { height: 16px; border-radius: 6px; }
+.skeleton-line-lg   { height: 22px; border-radius: 8px; }
+.skeleton-line-xl   { height: 32px; border-radius: 8px; }
+.skeleton-line-2xl  { height: 48px; border-radius: 10px; }
+.skeleton-card      { height: 280px; border-radius: 16px; }
+.skeleton-hero      { height: 520px; border-radius: 24px; }
+.skeleton-thumb     { aspect-ratio: 16/9; border-radius: 12px; }
+
+/* ─── Blog restaurant hyperlinks ──────────────────────────────────────────── */
+.catalog-restaurant-link {
+  color: #690008; /* primary */
+  text-decoration: underline;
+  text-decoration-color: rgba(105, 0, 8, 0.35);
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: text-decoration-color 0.15s ease, opacity 0.15s ease;
+}
+.catalog-restaurant-link:hover {
+  text-decoration-color: #690008;
+  opacity: 0.8;
+}
+
+/* ─── Restaurant hours component ──────────────────────────────────────────── */
+.hours-day-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(29, 27, 23, 0.06);
+}
+.hours-day-row:last-child { border-bottom: none; }
+.hours-day-row.is-today .hours-day-name { color: #690008; font-weight: 700; }
+.hours-day-row.is-today { background: rgba(105, 0, 8, 0.03); margin: 0 -8px; padding: 10px 8px; border-radius: 8px; }
+.hours-day-name { font-family: Manrope, sans-serif; font-size: 0.8125rem; font-weight: 500; }
+.hours-day-time { font-family: Manrope, sans-serif; font-size: 0.8125rem; opacity: 0.75; }
+.hours-closed-text { opacity: 0.4; font-style: italic; }
+.hours-status-open  { color: #2e7d32; background: rgba(46, 125, 50, 0.1); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; }
+.hours-status-closed { color: #c62828; background: rgba(198, 40, 40, 0.1); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; }

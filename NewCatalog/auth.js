@@ -18,7 +18,7 @@ export function clearAuthStorage() {
   sessionStorage.clear();
 }
 
-export function logout(redirectTo = 'login.html') {
+export function logout(redirectTo = 'newindex.html') {
   clearAuthStorage();
   window.location.replace(redirectTo);
 }

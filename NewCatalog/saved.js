@@ -130,13 +130,16 @@ function setSortButtons(active) {
 }
 
 function renderRowCard(b) {
-  const slug = b?.slug || b?.restaurant_id || '';
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  // storedId is what's in the DB (integer restaurant id) — used for API calls (delete, mark-been)
+  const storedId = String(b?.restaurant_id || '');
+  // nameSlug is for page navigation only — derived from the restaurant name
+  const nameSlug = b?.slug || (b?.name ? b.name.toLowerCase().replace(/\s+/g, '-') : storedId);
+  const href = nameSlug ? `restaurant.html?slug=${encodeURIComponent(nameSlug)}` : 'restaurant.html';
   const imgUrl = b?.image_url || b?.images?.[0] || '';
   const when = formatWhen(b?.added_at);
 
   return `
-    <div class="group" data-restaurant-id="${escapeHtml(slug)}">
+    <div class="group" data-restaurant-id="${escapeHtml(storedId)}">
       <div class="aspect-[4/5] overflow-hidden rounded-xl bg-surface-container-lowest editorial-shadow relative">
         <a class="block w-full h-full" href="${escapeHtml(href)}">
           ${
@@ -149,7 +152,7 @@ function renderRowCard(b) {
       <div class="mt-6 flex items-start justify-between gap-4">
         <div class="min-w-0 flex-1">
           <a href="${escapeHtml(href)}">
-            <h3 class="font-headline text-xl italic mb-1 truncate hover:text-primary transition-colors">${escapeHtml(b?.name || slug || 'Restaurant')}</h3>
+            <h3 class="font-headline text-xl italic mb-1 truncate hover:text-primary transition-colors">${escapeHtml(b?.name || nameSlug || 'Restaurant')}</h3>
           </a>
           <p class="font-label text-sm text-on-surface-variant truncate">${escapeHtml(formatCuisineArea(b))}</p>
           ${when ? `<p class="font-label text-xs uppercase tracking-widest opacity-60 mt-3">Saved ${escapeHtml(when)}</p>` : ''}

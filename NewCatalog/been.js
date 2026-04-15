@@ -115,8 +115,11 @@ function formatWhen(value) {
 }
 
 function renderCard(v) {
-  const slug = v?.slug || v?.restaurant_id || '';
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  // storedId is the integer restaurant_id — used for DELETE API calls
+  const storedId = String(v?.restaurant_id || '');
+  // nameSlug is for page navigation only — computed from name or from the slug field the server returns
+  const nameSlug = v?.slug || (v?.name ? v.name.toLowerCase().replace(/\s+/g, '-') : storedId);
+  const href = nameSlug ? `restaurant.html?slug=${encodeURIComponent(nameSlug)}` : 'restaurant.html';
   const imgUrl = v?.image_url || v?.images?.[0] || '';
   const rating = Number(v?.user_rating ?? 0) || 0;
   const when = formatWhen(v?.visited_at);
@@ -133,7 +136,7 @@ function renderCard(v) {
     : '';
 
   return `
-    <div class="group relative" data-slug="${escapeHtml(slug)}">
+    <div class="group relative" data-restaurant-id="${escapeHtml(storedId)}">
       <button
         class="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-surface-container-lowest/90 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-error hover:text-on-error editorial-shadow"
         type="button"
@@ -157,7 +160,7 @@ function renderCard(v) {
         </div>
         <div class="mt-6 flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <h3 class="font-headline text-xl italic mb-1 truncate">${escapeHtml(v?.name || slug || 'Restaurant')}</h3>
+            <h3 class="font-headline text-xl italic mb-1 truncate">${escapeHtml(v?.name || nameSlug || 'Restaurant')}</h3>
             <p class="font-label text-sm text-on-surface-variant truncate">${escapeHtml(formatCuisineArea(v))}</p>
             ${when ? `<p class="font-label text-xs uppercase tracking-widest opacity-60 mt-3">${escapeHtml(when)}</p>` : ''}
           </div>
@@ -251,18 +254,18 @@ async function init() {
     e.preventDefault();
     e.stopPropagation();
 
-    const card = btn.closest('[data-slug]');
-    const slug = card?.getAttribute('data-slug');
-    if (!slug) return;
+    const card = btn.closest('[data-restaurant-id]');
+    const storedId = card?.getAttribute('data-restaurant-id');
+    if (!storedId) return;
 
     btn.disabled = true;
     try {
-      await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(slug)}`, {
+      await fetchJson(`${FASTAPI_BASE}/api/visits/${encodeURIComponent(storedId)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
       // Remove from local array and re-render without a network reload
-      const idx = all.findIndex((v) => (v?.slug || v?.restaurant_id) === slug);
+      const idx = all.findIndex((v) => String(v?.restaurant_id || '') === storedId);
       if (idx !== -1) all.splice(idx, 1);
       apply();
     } catch {

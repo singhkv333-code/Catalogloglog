@@ -191,6 +191,33 @@ function restaurantsSkeletonGridHtml(count = 9) {
   return new Array(n).fill(0).map(() => restaurantSkeletonCardHtml()).join('\n');
 }
 
+function makePillDropdown({ btnId, panelId, chevronId }) {
+  const btn = document.getElementById(btnId);
+  const panel = document.getElementById(panelId);
+  const chevron = document.getElementById(chevronId);
+  if (!btn || !panel) return null;
+
+  function reposition() {
+    const r = btn.getBoundingClientRect();
+    const w = panel.offsetWidth || 200;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+    panel.style.top = `${r.bottom + 6}px`;
+    panel.style.left = `${left}px`;
+  }
+
+  function open() { reposition(); panel.classList.remove('hidden'); chevron?.classList.add('rotate-180'); }
+  function close() { panel.classList.add('hidden'); chevron?.classList.remove('rotate-180'); }
+  function toggle() { panel.classList.contains('hidden') ? open() : close(); }
+
+  btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+  panel.addEventListener('click', (e) => e.stopPropagation());
+  document.addEventListener('click', close);
+  window.addEventListener('scroll', () => { if (!panel.classList.contains('hidden')) reposition(); }, { passive: true });
+  window.addEventListener('resize', () => { if (!panel.classList.contains('hidden')) reposition(); });
+
+  return { open, close };
+}
+
 async function mapWithConcurrency(items, limit, fn) {
   const results = new Array(items.length);
   let index = 0;
@@ -213,12 +240,10 @@ async function main() {
   const meta = document.getElementById('allMeta');
   const searchInput = document.getElementById('allSearchInput');
   const searchBtn = document.getElementById('allSearchBtn');
-  const cuisineFilter = document.getElementById('cuisineFilter');
-  const sortSelect = document.getElementById('sortSelect');
   const loadMoreBtn = document.getElementById('loadMoreBtn');
   const clearBtn = document.getElementById('clearFiltersBtn');
 
-  if (!grid || !meta || !searchInput || !cuisineFilter || !sortSelect || !loadMoreBtn || !clearBtn) return;
+  if (!grid || !meta || !searchInput || !loadMoreBtn || !clearBtn) return;
 
   const ratingsCache = new Map(); // slug -> summary
   let restaurants = [];
@@ -237,23 +262,29 @@ async function main() {
     'Cafe', 'Pizza', 'Seafood', 'Dessert',
   ];
 
-  function setCuisineOptions(_dynamic) {
-    const prev = cuisineFilter.value || 'all';
-    cuisineFilter.innerHTML = '';
+  function setCuisineOptions() {
+    const panel = document.getElementById('cuisineDropdownPanel');
+    const label = document.getElementById('cuisineDropdownLabel');
+    if (!panel) return;
 
-    const optAll = document.createElement('option');
-    optAll.value = 'all';
-    optAll.textContent = 'All cuisines';
-    cuisineFilter.appendChild(optAll);
+    const allOptions = [
+      { value: 'all', label: 'All cuisines' },
+      ...PREDEFINED_CUISINES.map((c) => ({ value: c, label: c })),
+    ];
 
-    PREDEFINED_CUISINES.forEach((c) => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      cuisineFilter.appendChild(opt);
-    });
+    panel.innerHTML = allOptions
+      .map(
+        (opt) =>
+          `<button class="w-full text-left px-4 py-2.5 font-label text-sm transition-colors ${
+            opt.value === activeCuisine
+              ? 'text-primary font-bold bg-surface-container-low'
+              : 'hover:bg-surface-container-high'
+          }" data-cuisine="${escapeHtml(opt.value)}">${escapeHtml(opt.label)}</button>`
+      )
+      .join('');
 
-    cuisineFilter.value = prev && Array.from(cuisineFilter.options).some((o) => o.value === prev) ? prev : 'all';
+    const current = allOptions.find((o) => o.value === activeCuisine);
+    if (label) label.textContent = current?.label || 'All cuisines';
   }
 
   function passesCuisine(r) {
@@ -378,6 +409,37 @@ async function main() {
   const initialQuery = setFromUrl();
   await loadRestaurants({ query: initialQuery });
 
+  // Init custom pill dropdowns
+  const cuisineDropdown = makePillDropdown({ btnId: 'cuisineDropdownBtn', panelId: 'cuisineDropdownPanel', chevronId: 'cuisineDropdownChevron' });
+  const sortDropdown = makePillDropdown({ btnId: 'sortDropdownBtn', panelId: 'sortDropdownPanel', chevronId: 'sortDropdownChevron' });
+
+  // Cuisine panel: delegate click on options
+  document.getElementById('cuisineDropdownPanel')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-cuisine]');
+    if (!btn) return;
+    activeCuisine = btn.getAttribute('data-cuisine') || 'all';
+    setCuisineOptions();
+    cuisineDropdown?.close();
+    visibleCount = 12;
+    render();
+    updateUrl();
+  });
+
+  // Sort panel: delegate click on options
+  const SORT_LABELS = { name: 'Name (A–Z)', rating: 'Rating' };
+  document.getElementById('sortDropdownPanel')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-sort]');
+    if (!btn) return;
+    sortMode = btn.getAttribute('data-sort') || 'name';
+    const sortLabel = document.getElementById('sortDropdownLabel');
+    if (sortLabel) sortLabel.textContent = SORT_LABELS[sortMode] || 'Name (A–Z)';
+    sortDropdown?.close();
+    visibleCount = 12;
+    if (sortMode === 'rating') await ensureRatingsFor(restaurants);
+    render();
+    updateUrl();
+  });
+
   function goSearch() {
     const q = searchInput.value.trim();
     loadRestaurants({ query: q }).catch(() => {
@@ -389,44 +451,21 @@ async function main() {
   let debounce;
   searchInput.addEventListener('input', () => {
     clearTimeout(debounce);
-    debounce = setTimeout(() => {
-      goSearch();
-    }, 350);
+    debounce = setTimeout(goSearch, 350);
   });
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') goSearch();
-  });
+  searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') goSearch(); });
   searchBtn?.addEventListener('click', goSearch);
 
-  cuisineFilter.addEventListener('change', () => {
-    activeCuisine = cuisineFilter.value || 'all';
-    visibleCount = 12;
-    render();
-    updateUrl();
-  });
-
-  sortSelect.addEventListener('change', async () => {
-    sortMode = sortSelect.value || 'name';
-    visibleCount = 12;
-    if (sortMode === 'rating') {
-      await ensureRatingsFor(restaurants);
-    }
-    render();
-    updateUrl();
-  });
-
-  loadMoreBtn.addEventListener('click', () => {
-    visibleCount += 12;
-    render();
-  });
+  loadMoreBtn.addEventListener('click', () => { visibleCount += 12; render(); });
 
   clearBtn.addEventListener('click', () => {
     searchInput.value = '';
     activeCuisine = 'all';
     sortMode = 'name';
-    cuisineFilter.value = 'all';
-    sortSelect.value = 'name';
     visibleCount = 12;
+    const sortLabel = document.getElementById('sortDropdownLabel');
+    if (sortLabel) sortLabel.textContent = 'Name (A–Z)';
+    setCuisineOptions();
     updateUrl();
     loadRestaurants({ query: '' }).catch(() => {
       grid.innerHTML = `<div class="font-label text-sm text-error">Failed to load restaurants.</div>`;

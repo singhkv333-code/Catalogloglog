@@ -134,6 +134,12 @@
             </p>
           </div>
 
+          <!-- Verified success banner (shown after signup OTP) -->
+          <div id="verifiedBanner" class="hidden mb-8 flex items-center gap-3 bg-[#e8f5e9] border border-[#a5d6a7] text-[#1b5e20] rounded-xl px-5 py-4">
+            <span class="material-symbols-outlined text-base flex-none">check_circle</span>
+            <p class="font-label text-sm font-bold">Account verified! Sign in to get started.</p>
+          </div>
+
           <form id="loginForm" class="space-y-6" novalidate>
             <div>
               <label class="block font-label text-sm font-bold mb-2" for="email">Email</label>
@@ -175,6 +181,10 @@
               <p class="font-label text-xs opacity-60 mt-4" id="loginHint">
                 Backend required: Express on <span class="font-mono">http://localhost:4000</span>.
               </p>
+              <div class="mt-6 pt-6 border-t border-on-surface/10 text-center">
+                <span class="font-label text-xs opacity-60">Don't have an account?</span>
+                <a class="font-label text-xs font-bold text-primary hover:opacity-80 transition-opacity ml-2 underline underline-offset-2" href="signup.html">Create one →</a>
+              </div>
             </div>
           </form>
         </div>

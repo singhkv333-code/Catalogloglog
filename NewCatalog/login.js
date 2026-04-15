@@ -50,6 +50,16 @@ async function init() {
   });
 }
 
+// Show success banner when redirected from signup
+if (new URLSearchParams(window.location.search).get('verified') === '1') {
+  document.addEventListener('DOMContentLoaded', () => {
+    const banner = document.getElementById('verifiedBanner');
+    if (banner) banner.classList.remove('hidden');
+    // Pre-fill email if stored from signup flow
+    // (email is cleared in signup.js before redirect, so this is a best-effort)
+  });
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

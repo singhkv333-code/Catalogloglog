@@ -282,7 +282,7 @@ app.get('/restaurants/popular', async (req, res) => {
               COALESCE(s.average_rating,0) AS avg_rating,
               COALESCE(s.total_ratings,0)  AS total_ratings
        FROM restaurants r
-       LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = LOWER(REPLACE(r.name,' ','-'))
+       LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = r.id::text
        WHERE r.name IS NOT NULL AND r.image_url IS NOT NULL AND r.image_url != ''
        ORDER BY s.total_ratings DESC NULLS LAST, s.average_rating DESC NULLS LAST, RANDOM()
        LIMIT $1`,
@@ -349,12 +349,36 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
 app.post('/api/reviews', authMiddleware, async (req, res) => {
   const { restaurant_id, content, rating, visit_date } = req.body
   try {
+    // Enforce one review per user per restaurant
+    const existing = await pool.query(
+      `SELECT id FROM reviews WHERE user_id=$1 AND restaurant_id=$2`,
+      [req.user.id, restaurant_id]
+    )
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ message: 'You already have a review for this restaurant. Edit your existing review instead.' })
+    }
     const r = await pool.query(
       `INSERT INTO reviews (user_id, restaurant_id, content, rating, visit_date, created_at, updated_at, likes_count, is_edited)
        VALUES ($1,$2,$3,$4,$5,NOW(),NOW(),0,FALSE) RETURNING id`,
       [req.user.id, restaurant_id, content, rating || null, visit_date || null]
     )
     await updateRatingSummary(restaurant_id)
+    // Auto-add to been if not already there
+    try {
+      const beenEx = await pool.query(
+        `SELECT id FROM visits WHERE user_id=$1 AND restaurant_id=$2`,
+        [req.user.id, restaurant_id]
+      )
+      if (!beenEx.rows.length) {
+        await pool.query(
+          `INSERT INTO visits (user_id, restaurant_id, visited_at, created_at) VALUES ($1,$2,NOW(),NOW())`,
+          [req.user.id, restaurant_id]
+        )
+        console.log(`[SYNC] Auto-added restaurant ${restaurant_id} to been for user ${req.user.id} after review`)
+      }
+    } catch (syncErr) {
+      console.error(`[SYNC] Failed to auto-add been on review creation: ${syncErr.message}`)
+    }
     res.json({ success: true, message: 'Review created', review_id: r.rows[0].id })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -554,8 +578,9 @@ app.delete('/api/ratings/:restaurantId', authMiddleware, async (req, res) => {
 app.get('/api/users/bookmarks', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query(
-      `SELECT w.id, w.restaurant_id, w.added_at, rs.name, rs.area, rs.cuisine, rs.image_url
-       FROM wishlist w LEFT JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(w.restaurant_id)
+      `SELECT w.id, w.restaurant_id, w.added_at, rs.name, rs.area, rs.cuisine, rs.image_url,
+              LOWER(REPLACE(rs.name,' ','-')) AS slug
+       FROM wishlist w LEFT JOIN restaurants rs ON rs.id::text = w.restaurant_id
        WHERE w.user_id=$1 ORDER BY w.added_at DESC`,
       [req.user.id]
     )
@@ -622,6 +647,24 @@ app.delete('/api/visits/:restaurantId', authMiddleware, async (req, res) => {
   const { restaurantId } = req.params
   try {
     await pool.query(`DELETE FROM visits WHERE user_id=$1 AND restaurant_id=$2`, [req.user.id, restaurantId])
+    console.log(`[SYNC] Removed been for restaurant ${restaurantId} user ${req.user.id}`)
+    // On been removal: delete the user's review and rating for this restaurant
+    try {
+      const revRows = await pool.query(
+        `SELECT id FROM reviews WHERE user_id=$1 AND restaurant_id=$2`,
+        [req.user.id, restaurantId]
+      )
+      if (revRows.rows.length > 0) {
+        for (const row of revRows.rows) {
+          await pool.query(`DELETE FROM reviews WHERE id=$1`, [row.id])
+        }
+        console.log(`[SYNC] Deleted ${revRows.rows.length} review(s) for restaurant ${restaurantId} user ${req.user.id} on been removal`)
+      }
+      await pool.query(`DELETE FROM ratings WHERE user_id=$1 AND restaurant_id=$2`, [req.user.id, restaurantId])
+      await updateRatingSummary(restaurantId)
+    } catch (syncErr) {
+      console.error(`[SYNC] Failed to delete review/rating on been removal: ${syncErr.message}`)
+    }
     res.json({ success: true, message: 'Visit removed' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -654,7 +697,7 @@ app.get('/api/public-lists', optionalAuth, async (req, res) => {
     const lists = await Promise.all(r.rows.map(async lst => {
       const prev = await pool.query(
         `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(li.restaurant_id)
+         FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -692,7 +735,7 @@ app.get('/api/lists/public', optionalAuth, async (req, res) => {
     const lists = await Promise.all(r.rows.map(async lst => {
       const prev = await pool.query(
         `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(li.restaurant_id)
+         FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -720,7 +763,7 @@ app.get('/api/lists', authMiddleware, async (req, res) => {
     )
     const lists = await Promise.all(r.rows.map(async lst => {
       const covers = await pool.query(
-        `SELECT rs.image_url FROM list_items li JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(li.restaurant_id)
+        `SELECT rs.image_url FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -764,7 +807,7 @@ app.get('/api/lists/:listId/public', optionalAuth, async (req, res) => {
     )
     const restaurants = (await Promise.all(items.rows.map(async item => {
       const rest = await pool.query(
-        `SELECT name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug FROM restaurants WHERE LOWER(REPLACE(name,' ','-'))=$1 LIMIT 1`,
+        `SELECT name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug FROM restaurants WHERE id::text=$1 LIMIT 1`,
         [item.slug]
       )
       return rest.rows.length ? { ...rest.rows[0], notes: item.notes } : null
@@ -791,8 +834,9 @@ app.get('/api/lists/:listId', optionalAuth, async (req, res) => {
       return res.status(403).json({ message: 'This list is private' })
     }
     const items = await pool.query(
-      `SELECT li.id, li.restaurant_id, li.position, li.notes, li.added_at, rs.name, rs.area, rs.cuisine, rs.image_url
-       FROM list_items li LEFT JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(li.restaurant_id)
+      `SELECT li.id, li.restaurant_id, li.position, li.notes, li.added_at, rs.name, rs.area, rs.cuisine, rs.image_url,
+              LOWER(REPLACE(rs.name,' ','-')) AS slug
+       FROM list_items li LEFT JOIN restaurants rs ON rs.id::text = li.restaurant_id
        WHERE li.list_id=$1 ORDER BY li.position ASC`,
       [listId]
     )
@@ -924,6 +968,12 @@ app.get('/api/restaurants/:restaurantId/in-lists', authMiddleware, async (req, r
 app.get('/api/restaurants/:slug/friends-rating', authMiddleware, async (req, res) => {
   const slug = req.params.slug.toLowerCase()
   try {
+    // Resolve slug to integer restaurant id
+    const restRes = await pool.query(
+      `SELECT id FROM restaurants WHERE LOWER(REPLACE(name,' ','-'))=$1 LIMIT 1`, [slug]
+    )
+    if (!restRes.rows.length) return res.json({ friends: [], avg_rating: null, count: 0 })
+    const restaurantId = restRes.rows[0].id.toString()
     const r = await pool.query(
       `SELECT u.id, u.username, rat.stars
        FROM ratings rat
@@ -934,7 +984,7 @@ app.get('/api/restaurants/:slug/friends-rating', authMiddleware, async (req, res
            FROM friendships WHERE (requester_id=$2 OR addressee_id=$2) AND status='accepted'
          )
        ORDER BY u.username`,
-      [slug, req.user.id]
+      [restaurantId, req.user.id]
     )
     const friends = r.rows
     const avg = friends.length
@@ -947,15 +997,21 @@ app.get('/api/restaurants/:slug/friends-rating', authMiddleware, async (req, res
 app.get('/api/restaurants/:slug/friends-been', authMiddleware, async (req, res) => {
   const slug = req.params.slug.toLowerCase()
   try {
+    // Resolve slug to integer restaurant id
+    const restRes = await pool.query(
+      `SELECT id FROM restaurants WHERE LOWER(REPLACE(name,' ','-'))=$1 LIMIT 1`, [slug]
+    )
+    if (!restRes.rows.length) return res.json({ friends: [] })
+    const restaurantId = restRes.rows[0].id.toString()
     const r = await pool.query(
       `SELECT DISTINCT u.id, u.username FROM visits v JOIN users u ON v.user_id=u.id
-       WHERE LOWER(v.restaurant_id)=$1
+       WHERE v.restaurant_id=$1
          AND v.user_id IN (
            SELECT CASE WHEN requester_id=$2 THEN addressee_id ELSE requester_id END
            FROM friendships WHERE (requester_id=$2 OR addressee_id=$2) AND status='accepted'
          )
        ORDER BY u.username`,
-      [slug, req.user.id]
+      [restaurantId, req.user.id]
     )
     res.json({ friends: r.rows })
   } catch (err) { res.status(500).json({ message: err.message }) }
@@ -1012,7 +1068,7 @@ app.get('/api/friends/activity', authMiddleware, async (req, res) => {
               rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine AS restaurant_cuisine, rs.image_url,
               rat.stars, rev.content AS review_snippet
        FROM visits v JOIN users u ON v.user_id=u.id
-       LEFT JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=LOWER(v.restaurant_id)
+       LEFT JOIN restaurants rs ON rs.id::text = v.restaurant_id
        LEFT JOIN ratings rat ON rat.user_id=v.user_id AND rat.restaurant_id=v.restaurant_id
        LEFT JOIN reviews rev ON rev.user_id=v.user_id AND rev.restaurant_id=v.restaurant_id
        WHERE v.user_id IN (
@@ -1147,10 +1203,11 @@ app.get('/api/users/:userId/visits/recent', authMiddleware, async (req, res) => 
   const limit = Math.min(parseInt(req.query.limit) || 5, 1000)
   try {
     const r = await pool.query(
-      `SELECT v.restaurant_id AS slug, rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
+      `SELECT v.restaurant_id, LOWER(REPLACE(rs.name,' ','-')) AS slug,
+              rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
               COALESCE(rat.stars, 0) AS user_rating
        FROM visits v
-       LEFT JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=v.restaurant_id
+       LEFT JOIN restaurants rs ON rs.id::text = v.restaurant_id
        LEFT JOIN ratings rat ON rat.restaurant_id=v.restaurant_id AND rat.user_id=$1
        WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT $2`,
       [userId, limit]
@@ -1166,7 +1223,7 @@ app.get('/api/users/:userId/reviews', authMiddleware, async (req, res) => {
     const r = await pool.query(
       `SELECT rev.id, rev.restaurant_id, rev.content, rev.rating, rev.visit_date, rev.created_at, rev.likes_count,
               rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine
-       FROM reviews rev LEFT JOIN restaurants rs ON LOWER(REPLACE(rs.name,' ','-'))=rev.restaurant_id
+       FROM reviews rev LEFT JOIN restaurants rs ON rs.id::text = rev.restaurant_id
        WHERE rev.user_id=$1 ORDER BY rev.created_at DESC LIMIT $2`,
       [userId, limit]
     )
