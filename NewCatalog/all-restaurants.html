@@ -181,40 +181,53 @@
 
         <!-- Filter bar -->
         <div class="flex flex-wrap items-center gap-3">
-          <!-- Cuisine custom dropdown -->
-          <div class="relative" id="cuisineDropdownWrap">
-            <button type="button" id="cuisineDropdownBtn"
-              class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
-              <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Cuisine</span>
-              <span class="font-label text-sm" id="cuisineDropdownLabel">All cuisines</span>
-              <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="cuisineDropdownChevron">expand_more</span>
-            </button>
-            <div id="cuisineDropdownPanel"
-              class="hidden fixed z-50 min-w-[200px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2 max-h-72 overflow-y-auto">
-            </div>
-          </div>
 
-          <!-- Sort custom dropdown -->
-          <div class="relative" id="sortDropdownWrap">
-            <button type="button" id="sortDropdownBtn"
-              class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
-              <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Sort</span>
-              <span class="font-label text-sm" id="sortDropdownLabel">Name (A–Z)</span>
-              <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="sortDropdownChevron">expand_more</span>
-            </button>
-            <div id="sortDropdownPanel"
-              class="hidden fixed z-50 min-w-[180px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2">
-              <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="name">Name (A–Z)</button>
-              <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="rating">Rating</button>
-            </div>
-          </div>
-          <button
-            class="bg-surface-container-high text-on-surface px-6 py-3 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors editorial-shadow"
-            id="clearFiltersBtn"
-            type="button"
-          >
-            Clear
+          <!-- Mobile: toggle button (hidden on md+) -->
+          <button type="button" id="filtersToggleBtn"
+            class="md:hidden flex items-center gap-2 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 hover:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined text-[16px] text-on-surface-variant">tune</span>
+            <span class="font-label text-sm" id="filtersToggleLabel">Filters</span>
           </button>
+
+          <!-- Filter controls: always visible on md+, toggled on mobile -->
+          <div id="filterControls" class="hidden md:flex items-center flex-wrap gap-3">
+
+            <!-- Cuisine custom dropdown -->
+            <div class="relative" id="cuisineDropdownWrap">
+              <button type="button" id="cuisineDropdownBtn"
+                class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
+                <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Cuisine</span>
+                <span class="font-label text-sm" id="cuisineDropdownLabel">All cuisines</span>
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="cuisineDropdownChevron">expand_more</span>
+              </button>
+              <div id="cuisineDropdownPanel"
+                class="hidden fixed z-50 min-w-[200px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2 max-h-72 overflow-y-auto">
+              </div>
+            </div>
+
+            <!-- Sort custom dropdown -->
+            <div class="relative" id="sortDropdownWrap">
+              <button type="button" id="sortDropdownBtn"
+                class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
+                <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Sort</span>
+                <span class="font-label text-sm" id="sortDropdownLabel">Name (A–Z)</span>
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="sortDropdownChevron">expand_more</span>
+              </button>
+              <div id="sortDropdownPanel"
+                class="hidden fixed z-50 min-w-[180px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2">
+                <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="name">Name (A–Z)</button>
+                <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="rating">Rating</button>
+              </div>
+            </div>
+
+            <button
+              class="bg-surface-container-high text-on-surface px-6 py-3 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors editorial-shadow"
+              id="clearFiltersBtn"
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
 
           <!-- Live count -->
           <div class="ml-auto font-label text-xs uppercase tracking-widest opacity-50" id="allMeta"></div>

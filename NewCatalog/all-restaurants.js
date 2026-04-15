@@ -458,6 +458,27 @@ async function main() {
 
   loadMoreBtn.addEventListener('click', () => { visibleCount += 12; render(); });
 
+  // Mobile filter toggle
+  const filtersToggleBtn = document.getElementById('filtersToggleBtn');
+  const filterControls = document.getElementById('filterControls');
+  const filtersToggleLabel = document.getElementById('filtersToggleLabel');
+  filtersToggleBtn?.addEventListener('click', () => {
+    const isOpen = !filterControls.classList.contains('hidden');
+    if (isOpen) {
+      filterControls.classList.add('hidden');
+      filterControls.style.display = '';
+      if (filtersToggleLabel) filtersToggleLabel.textContent = 'Filters';
+    } else {
+      filterControls.classList.remove('hidden');
+      filterControls.style.display = 'flex';
+      filterControls.style.flexWrap = 'wrap';
+      filterControls.style.gap = '12px';
+      filterControls.style.width = '100%';
+      filterControls.style.marginTop = '4px';
+      if (filtersToggleLabel) filtersToggleLabel.textContent = 'Hide filters';
+    }
+  });
+
   clearBtn.addEventListener('click', () => {
     searchInput.value = '';
     activeCuisine = 'all';
@@ -467,6 +488,12 @@ async function main() {
     if (sortLabel) sortLabel.textContent = 'Name (A–Z)';
     setCuisineOptions();
     updateUrl();
+    // Collapse filter panel on mobile after clearing
+    if (window.innerWidth < 768 && filterControls && !filterControls.classList.contains('hidden')) {
+      filterControls.classList.add('hidden');
+      filterControls.style.display = '';
+      if (filtersToggleLabel) filtersToggleLabel.textContent = 'Filters';
+    }
     loadRestaurants({ query: '' }).catch(() => {
       grid.innerHTML = `<div class="font-label text-sm text-error">Failed to load restaurants.</div>`;
     });
