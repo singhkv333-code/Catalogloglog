@@ -512,9 +512,23 @@ async function hydrateCuratedLists({ token }) {
 
     const cover = pickListCoverImage(list);
     const img = card.querySelector('img');
-    if (img && cover) {
-      img.src = cover;
-      img.alt = list?.title ? String(list.title) : img.alt;
+    const imgContainer = img?.closest('div.absolute.inset-0.overflow-hidden');
+
+    if (img) {
+      if (cover) {
+        img.src = cover;
+        img.alt = list?.title ? String(list.title) : '';
+        img.style.display = '';
+      } else {
+        // No cover image — show a gradient fallback with the list initial
+        img.style.display = 'none';
+        if (imgContainer && !imgContainer.querySelector('[data-list-fallback]')) {
+          const fallback = document.createElement('div');
+          fallback.setAttribute('data-list-fallback', '1');
+          fallback.className = 'w-full h-full flex items-end bg-gradient-to-br from-surface-container-high to-surface-container-highest';
+          imgContainer.insertBefore(fallback, imgContainer.firstChild);
+        }
+      }
     }
 
     const titleOverlay = card.querySelector('p.absolute.bottom-4');
@@ -905,15 +919,15 @@ async function init() {
 
   finishProgress();
 
-  // Next sections: Friend activity + recent visits (auth-gated; guests see empty states)
+  // Curated Lists + The Journal — public sections, load for everyone
   const token = getToken();
+  hydrateCuratedLists({ token }).catch(() => {});
+  hydrateJournal().catch(() => {});
+
+  // Next sections: Friend activity + recent visits (auth-gated; guests see empty states)
   if (token && user?.id != null) {
     hydrateFriendActivity({ token }).catch(() => {});
     hydrateRecentlyVisited({ token, userId: user.id }).catch(() => {});
-
-    // Curated Lists + The Journal
-    hydrateCuratedLists({ token }).catch(() => {});
-    hydrateJournal().catch(() => {});
   }
 }
 

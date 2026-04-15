@@ -697,7 +697,7 @@ app.get('/api/public-lists', optionalAuth, async (req, res) => {
     const lists = await Promise.all(r.rows.map(async lst => {
       const prev = await pool.query(
         `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
+         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -735,7 +735,7 @@ app.get('/api/lists/public', optionalAuth, async (req, res) => {
     const lists = await Promise.all(r.rows.map(async lst => {
       const prev = await pool.query(
         `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
+         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -763,7 +763,7 @@ app.get('/api/lists', authMiddleware, async (req, res) => {
     )
     const lists = await Promise.all(r.rows.map(async lst => {
       const covers = await pool.query(
-        `SELECT rs.image_url FROM list_items li JOIN restaurants rs ON rs.id::text = li.restaurant_id
+        `SELECT rs.image_url FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
          WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
         [lst.id]
       )
@@ -1068,7 +1068,7 @@ app.get('/api/friends/activity', authMiddleware, async (req, res) => {
               rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine AS restaurant_cuisine, rs.image_url,
               rat.stars, rev.content AS review_snippet
        FROM visits v JOIN users u ON v.user_id=u.id
-       LEFT JOIN restaurants rs ON rs.id::text = v.restaurant_id
+       LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
        LEFT JOIN ratings rat ON rat.user_id=v.user_id AND rat.restaurant_id=v.restaurant_id
        LEFT JOIN reviews rev ON rev.user_id=v.user_id AND rev.restaurant_id=v.restaurant_id
        WHERE v.user_id IN (
@@ -1207,7 +1207,7 @@ app.get('/api/users/:userId/visits/recent', authMiddleware, async (req, res) => 
               rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
               COALESCE(rat.stars, 0) AS user_rating
        FROM visits v
-       LEFT JOIN restaurants rs ON rs.id::text = v.restaurant_id
+       LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
        LEFT JOIN ratings rat ON rat.restaurant_id=v.restaurant_id AND rat.user_id=$1
        WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT $2`,
       [userId, limit]
