@@ -181,16 +181,16 @@ function init() {
 
       if (error) throw error;
 
-      // If Supabase returned a session the user is active immediately
-      // (email confirmation is disabled in the project settings).
-      // Go straight to the app; no need to visit the login page.
-      if (data?.session) {
-        window.location.replace('newindex.html');
-        return;
-      }
+      // The auto_confirm_user trigger immediately sets email_confirmed_at,
+      // so sign the user in straight away — no email link, no OTP, no waiting.
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email:    _email,
+        password: _password,
+      });
 
-      // Email confirmation is enabled — send them to login with the success banner.
-      window.location.replace('login.html?verified=1');
+      if (signInError) throw signInError;
+
+      window.location.replace('newindex.html');
 
     } catch (err) {
       const msg = err?.message || 'Something went wrong. Please try again.';
