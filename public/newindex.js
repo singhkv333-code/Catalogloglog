@@ -24,6 +24,7 @@ function pageUrl(path) {
 function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
+  accountBtn.style.visibility = 'visible';
 
   // ── Unauthenticated: show "Sign in" link ──────────────────────────────
   if (!user) {

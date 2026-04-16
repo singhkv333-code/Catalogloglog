@@ -122,6 +122,7 @@ function wireLoginOverlay() {
 function wireAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
+  accountBtn.style.visibility = 'visible';
 
   if (!user) {
     accountBtn.setAttribute('aria-label', 'Sign in');

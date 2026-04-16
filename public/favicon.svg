@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@1,400&amp;display=swap');
+    </style>
+  </defs>
+  <text
+    x="16"
+    y="26"
+    font-family="Newsreader, Georgia, serif"
+    font-size="28"
+    font-style="italic"
+    font-weight="400"
+    fill="#1d1b17"
+    text-anchor="middle"
+  >C</text>
+</svg>

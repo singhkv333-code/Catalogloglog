@@ -30,6 +30,7 @@ async function fetchJson(url, { method = 'GET', headers = {}, body } = {}) {
 function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
+  accountBtn.style.visibility = 'visible';
 
   if (!user) {
     accountBtn.setAttribute('aria-label', 'Sign in');
