@@ -55,7 +55,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -94,7 +94,7 @@ function ensureAccountDropdown({ user }) {
     },
     { passive: true }
   );
-  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login.html'));
+  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login'));
 }
 
 function getListId() {
@@ -113,7 +113,7 @@ function renderItemCard(item, { isOwner } = {}) {
   const name = item?.name || 'Restaurant';
   const meta = [item?.cuisine, item?.area].filter(Boolean).join(' • ');
   const imgUrl = item?.image_url || (Array.isArray(item?.images) ? item.images[0] : '');
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  const href = slug ? `restaurant??slug=${encodeURIComponent(slug)}` : 'restaurant';
 
   const removeBtn = isOwner
     ? `<button class="absolute top-4 left-4 bg-surface/90 backdrop-blur px-3 py-1 rounded-full font-label tracking-widest font-bold text-[10px] hover:bg-surface-container-lowest transition-colors" type="button" data-action="remove-item" data-item-id="${escapeHtml(
@@ -338,7 +338,7 @@ function openAddRestaurantModal({ token, listId, onAdded }) {
 }
 
 async function init() {
-  const user = await requireAuth({ redirectTo: 'login.html' });
+  const user = await requireAuth({ redirectTo: 'login' });
   if (!user) return;
   ensureAccountDropdown({ user });
 
@@ -486,7 +486,7 @@ async function init() {
         method: 'DELETE',
         headers,
       });
-      window.location.href = 'lists.html';
+      window.location.href = 'lists';
     } catch {
       els.deleteBtn.disabled = false;
     }

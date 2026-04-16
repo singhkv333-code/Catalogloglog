@@ -57,7 +57,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -96,7 +96,7 @@ function ensureAccountDropdown({ user }) {
     },
     { passive: true }
   );
-  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login.html'));
+  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login'));
 }
 
 function getProfileId(fallbackId) {
@@ -140,7 +140,7 @@ function formatWhen(value) {
 
 function renderRestaurantTile(v, { showWhen = false } = {}) {
   const slug = v?.slug || v?.restaurant_id || '';
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  const href = slug ? `restaurant??slug=${encodeURIComponent(slug)}` : 'restaurant';
   const imgUrl = v?.image_url || v?.images?.[0] || '';
   const when = showWhen ? formatWhen(v?.visited_at || v?.added_at) : '';
   return `
@@ -167,7 +167,7 @@ function renderRestaurantTile(v, { showWhen = false } = {}) {
 
 function renderSavedRow(b) {
   const slug = b?.slug || b?.restaurant_id || '';
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  const href = slug ? `restaurant??slug=${encodeURIComponent(slug)}` : 'restaurant';
   const imgUrl = b?.image_url || b?.images?.[0] || '';
   const when = formatWhen(b?.added_at);
   return `
@@ -202,7 +202,7 @@ function renderSavedRow(b) {
 }
 
 function renderListCard(l) {
-  const href = `list.html?id=${encodeURIComponent(String(l?.id ?? ''))}`;
+  const href = `list??id=${encodeURIComponent(String(l?.id ?? ''))}`;
   const title = l?.title || 'List';
   const desc = l?.description || '';
   const count = Number(l?.item_count ?? 0) || 0;
@@ -230,7 +230,7 @@ function renderListCard(l) {
 
 function renderUserReviewCard(r) {
   const slug = r?.slug || r?.restaurant_id || '';
-  const href = slug ? `restaurant.html?slug=${encodeURIComponent(slug)}` : 'restaurant.html';
+  const href = slug ? `restaurant??slug=${encodeURIComponent(slug)}` : 'restaurant';
   const stars = r?.rating ? Number(r.rating) : null;
   const starsText = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
   const when = r?.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';
@@ -334,7 +334,7 @@ function openEditProfileModal({ token, user, onSaved }) {
 }
 
 async function init() {
-  const currentUser = await requireAuth({ redirectTo: 'login.html' });
+  const currentUser = await requireAuth({ redirectTo: 'login' });
   if (!currentUser) return;
   ensureAccountDropdown({ user: currentUser });
 
@@ -349,7 +349,7 @@ async function init() {
   if (isOwn) {
     const params = new URLSearchParams(window.location.search);
     if (!params.get('id')) {
-      window.history.replaceState(null, '', `profile.html?id=${encodeURIComponent(currentUser.id)}`);
+      window.history.replaceState(null, '', `profile??id=${encodeURIComponent(currentUser.id)}`);
     }
   }
 

@@ -190,7 +190,7 @@ function init() {
 
       if (signInError) throw signInError;
 
-      window.location.replace('newindex.html');
+      window.location.replace('/');
 
     } catch (err) {
       const msg = err?.message || 'Something went wrong. Please try again.';

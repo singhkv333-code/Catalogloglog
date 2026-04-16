@@ -36,7 +36,7 @@ function ensureAccountDropdown({ user }) {
     accountBtn.setAttribute('aria-label', 'Sign in');
     accountBtn.textContent = 'login';
     accountBtn.style.cursor = 'pointer';
-    accountBtn.onclick = () => (window.location.href = 'login.html');
+    accountBtn.onclick = () => (window.location.href = 'login');
     return;
   }
 
@@ -64,7 +64,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
       user?.id ?? ''
     )}">Profile</a>
     <button id="navLogoutBtn" class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors">Log out</button>
@@ -107,7 +107,7 @@ function ensureAccountDropdown({ user }) {
     if (!menu.classList.contains('hidden')) positionMenu();
   });
 
-  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login.html'));
+  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login'));
 }
 
 function primaryCuisineLabel(cuisine) {
@@ -137,7 +137,7 @@ function normalizeRestaurant(r) {
 }
 
 function restaurantCardHtml(r, rating) {
-  const href = r.slug ? `restaurant.html?slug=${encodeURIComponent(r.slug)}` : 'restaurant.html';
+  const href = r.slug ? `restaurant??slug=${encodeURIComponent(r.slug)}` : 'restaurant';
   const meta = [primaryCuisineLabel(r.cuisine), r.area].filter(Boolean).join(' · ');
   const ratingVal = rating?.total_ratings
     ? Number(rating.average_rating || 0).toFixed(1)
@@ -403,7 +403,7 @@ async function main() {
     if (activeCuisine && activeCuisine !== 'all') params.set('cuisine', activeCuisine);
     if (sortMode && sortMode !== 'name') params.set('sort', sortMode);
     const qs = params.toString();
-    const next = qs ? `all-restaurants.html?${qs}` : 'all-restaurants.html';
+    const next = qs ? `all-restaurants??${qs}` : 'all-restaurants';
     window.history.replaceState({}, '', next);
   }
 

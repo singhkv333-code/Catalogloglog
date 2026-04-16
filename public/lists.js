@@ -61,7 +61,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -101,7 +101,7 @@ function ensureAccountDropdown({ user }) {
     },
     { passive: true }
   );
-  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login.html'));
+  menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => logout('login'));
 }
 
 function setToggleActive(activeView) {
@@ -155,7 +155,7 @@ function renderListCard(list, { view = 'discover' } = {}) {
   const saveCount = Number(list?.likes_count ?? 0);
   const saved = !!list?.liked_by_user;
 
-  // Keep the exact visual pattern from `newlists.html` (stack + card), but add a small save button for Discover.
+  // Keep the exact visual pattern from `newlists?` (stack + card), but add a small save button for Discover.
   const saveBtnHtml =
     view === 'discover'
       ? `
@@ -349,7 +349,7 @@ function openCreateListModal({ onCreate }) {
       const created = await onCreate({ title, description: description || null, is_public: isPublic });
       close();
       if (created?.id != null) {
-        window.location.href = `list.html?id=${encodeURIComponent(created.id)}`;
+        window.location.href = `list??id=${encodeURIComponent(created.id)}`;
       }
     } catch (ex) {
       if (err) {
@@ -368,7 +368,7 @@ async function toggleSave({ token, listId, liked }) {
 }
 
 async function init() {
-  const user = await requireAuth({ redirectTo: 'login.html' });
+  const user = await requireAuth({ redirectTo: 'login' });
   if (!user) return;
   ensureAccountDropdown({ user });
 
@@ -487,7 +487,7 @@ async function init() {
     if (!card) return;
     const id = card.getAttribute('data-id');
     if (!id) return;
-    window.location.href = `list.html?id=${encodeURIComponent(id)}`;
+    window.location.href = `list??id=${encodeURIComponent(id)}`;
   });
 
   await refresh();

@@ -63,7 +63,7 @@ async function init() {
       if (!data?.session) throw new Error('No session returned. Please try again.');
 
       // Supabase stores the session automatically — go straight to the app
-      window.location.replace('newindex.html');
+      window.location.replace('/');
 
     } catch (err) {
       setError(err?.message || 'Sign in failed. Please try again.');

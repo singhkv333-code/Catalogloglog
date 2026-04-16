@@ -38,7 +38,7 @@ export function clearAuthStorage() {
   sessionStorage.clear();
 }
 
-export async function logout(redirectTo = 'newindex.html') {
+export async function logout(redirectTo = '/') {
   await supabase.auth.signOut();
   clearAuthStorage();
   window.location.replace(redirectTo);
@@ -96,7 +96,7 @@ export async function fetchCurrentUser({ redirectOnFail = null } = {}) {
 }
 
 // Alias used by protected pages
-export async function requireAuth({ redirectTo = 'login.html' } = {}) {
+export async function requireAuth({ redirectTo = 'login' } = {}) {
   return fetchCurrentUser({ redirectOnFail: redirectTo });
 }
 

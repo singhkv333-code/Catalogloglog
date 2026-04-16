@@ -31,7 +31,7 @@ function ensureAccountDropdown({ user }) {
     accountBtn.setAttribute('aria-label', 'Sign in');
     accountBtn.textContent = '';
     const signInChip = document.createElement('a');
-    signInChip.href = 'login.html';
+    signInChip.href = 'login';
     signInChip.className =
       'inline-flex items-center gap-1.5 font-label text-xs font-bold tracking-widest uppercase text-primary hover:opacity-80 transition-opacity';
     signInChip.textContent = 'Sign in';
@@ -63,7 +63,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile.html?id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
       user.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -103,7 +103,7 @@ function ensureAccountDropdown({ user }) {
   }, { passive: true });
 
   menu.querySelector('#navLogoutBtn')?.addEventListener('click', () => {
-    logout('newindex.html'); // redirect to homepage (public), not login
+    logout('/'); // redirect to homepage (public), not login
   });
 }
 
@@ -163,7 +163,7 @@ function ensureViewAllLink() {
   const label = (a.textContent || '').trim().toLowerCase();
   if (label === 'view map' || label === 'view all' || a.getAttribute('href') === '#') {
     a.textContent = 'View All';
-    a.setAttribute('href', pageUrl('all-restaurants.html'));
+    a.setAttribute('href', pageUrl('all-restaurants'));
   }
 }
 
@@ -176,7 +176,7 @@ function hydratePopularCardFeature(cardEl, restaurant) {
   const badge = cardEl.querySelector('span.bg-primary-container');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant.html?slug=${encodeURIComponent(slug)}`);
+  const clickUrl = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -215,7 +215,7 @@ function hydratePopularCardSmall(cardEl, restaurant) {
   const meta = cardEl.querySelector('p');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant.html?slug=${encodeURIComponent(slug)}`);
+  const clickUrl = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -350,7 +350,7 @@ function setupHomeSearch() {
     list.forEach((r) => {
       const slug = r.slug || r.id || '';
       const a = document.createElement('a');
-      a.href = pageUrl(`restaurant.html?slug=${encodeURIComponent(slug)}`);
+      a.href = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
       a.className =
         'flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors w-full text-left';
 
@@ -416,16 +416,16 @@ function setupHomeSearch() {
     if (e.key === 'Enter') {
       const q = input.value.trim();
       window.location.href = q
-        ? `all-restaurants.html?search=${encodeURIComponent(q)}`
-        : 'all-restaurants.html';
+        ? `all-restaurants??search=${encodeURIComponent(q)}`
+        : 'all-restaurants';
     }
   });
 
   searchBtn?.addEventListener('click', () => {
     const q = input.value.trim();
     window.location.href = q
-      ? `all-restaurants.html?search=${encodeURIComponent(q)}`
-      : 'all-restaurants.html';
+      ? `all-restaurants??search=${encodeURIComponent(q)}`
+      : 'all-restaurants';
   });
 
   document.addEventListener('click', (e) => {
@@ -555,7 +555,7 @@ async function hydrateCuratedLists({ token }) {
     card.style.cursor = 'pointer';
     card.onclick = () => {
       const id = list?.id ?? '';
-      window.location.href = `list.html?id=${encodeURIComponent(id)}`;
+      window.location.href = `list??id=${encodeURIComponent(id)}`;
     };
   });
 }
@@ -616,7 +616,7 @@ async function hydrateJournal() {
     article.style.display = '';
 
     const b = normalized[i];
-    const href = `blog.html?slug=${encodeURIComponent(b.slug)}`;
+    const href = `blog??slug=${encodeURIComponent(b.slug)}`;
 
     const imgWrap = article.querySelector('.aspect-video');
     const img = article.querySelector('img');
@@ -722,7 +722,7 @@ async function hydrateFriendActivity({ token }) {
       <div class="catalog-glass p-8 rounded-xl">
         <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">No activity yet</p>
         <p class="font-body text-on-surface-variant leading-relaxed">Add friends to see where they’re dining.</p>
-        <a class="font-label text-sm font-bold inline-block mt-5 text-primary border-b border-primary/40 hover:border-primary transition-colors" href="friends.html">Find Friends →</a>
+        <a class="font-label text-sm font-bold inline-block mt-5 text-primary border-b border-primary/40 hover:border-primary transition-colors" href="friends">Find Friends →</a>
       </div>
     `.trim();
     return;
@@ -750,8 +750,8 @@ async function hydrateFriendActivity({ token }) {
 
     const slug = item?.slug || '';
     const href = slug
-      ? pageUrl(`restaurant.html?slug=${encodeURIComponent(slug)}`)
-      : pageUrl('restaurant.html');
+      ? pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`)
+      : pageUrl('restaurant');
 
     const target = cardSlots[idx];
     if (!target) {
@@ -780,7 +780,7 @@ async function hydrateFriendActivity({ token }) {
       if (skeletonAvatar) skeletonAvatar.remove();
 
       const friendProfileHref = item?.friend_id
-        ? pageUrl(`profile.html?id=${encodeURIComponent(item.friend_id)}`)
+        ? pageUrl(`profile??id=${encodeURIComponent(item.friend_id)}`)
         : null;
 
       let avatarChip = header.querySelector('[data-avatar-chip="1"]');
@@ -884,8 +884,8 @@ async function hydrateRecentlyVisited({ token, userId }) {
     const v = list[i];
     const slug = v?.slug || v?.restaurant_id || '';
     const href = slug
-      ? pageUrl(`restaurant.html?slug=${encodeURIComponent(slug)}`)
-      : pageUrl('restaurant.html');
+      ? pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`)
+      : pageUrl('restaurant');
     card.style.cursor = 'pointer';
     card.onclick = () => {
       window.location.href = href;
