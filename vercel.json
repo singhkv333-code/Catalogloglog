@@ -1,6 +1,7 @@
 {
   "version": 2,
   "cleanUrls": true,
+  "buildCommand": "",
   "outputDirectory": "public",
   "functions": {
     "api/server.js": {
