@@ -152,6 +152,11 @@ function init() {
       document.getElementById('fullName')?.focus();
       return;
     }
+    if (!/^[a-zA-Z\s'-]+$/.test(fullName)) {
+      setError('fullNameError', 'Full name can only contain letters, spaces, hyphens, and apostrophes.');
+      document.getElementById('fullName')?.focus();
+      return;
+    }
     if (!username) {
       setError('usernameError', 'Please choose a username.');
       document.getElementById('username')?.focus();
@@ -196,6 +201,10 @@ function init() {
       const msg = err?.message || 'Something went wrong. Please try again.';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('already exists')) {
         setError('profileError', 'An account with this email already exists. Try signing in.');
+      } else if (msg.toLowerCase().includes('username') || msg.toLowerCase().includes('unique') || msg.toLowerCase().includes('duplicate')) {
+        setError('usernameError', 'That username is already taken. Please choose another.');
+      } else if (msg.toLowerCase().includes('database')) {
+        setError('usernameError', 'That username is already taken. Please choose another.');
       } else {
         setError('profileError', msg);
       }
