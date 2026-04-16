@@ -65,7 +65,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -203,8 +203,8 @@ function renderActivityCard(a) {
   const stars = Number(a?.stars ?? 0) || 0;
   const starsText = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
 
-  const friendHref = `profile??id=${encodeURIComponent(friendId)}`;
-  const restHref = `restaurant??slug=${encodeURIComponent(restSlug)}`;
+  const friendHref = `profile?id=${encodeURIComponent(friendId)}`;
+  const restHref = `restaurant?slug=${encodeURIComponent(restSlug)}`;
 
   return `
     <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">
@@ -337,7 +337,7 @@ async function init() {
       peopleList.innerHTML = list
         .map((f) => {
           const friendId = f?.friend_id ?? '';
-          const friendHref = `profile??id=${encodeURIComponent(friendId)}`;
+          const friendHref = `profile?id=${encodeURIComponent(friendId)}`;
           const right = actionButton({ label: 'Remove', action: 'friend-remove', tone: 'soft', icon: 'person_remove' });
           const friendDisplayName = f?.name || f?.username || 'Friend';
           const friendHandle = f?.username ? `@${f.username}` : '';
@@ -368,7 +368,7 @@ async function init() {
         return renderPersonRow({
           title: reqDisplayName,
           subtitle: reqSubtitle,
-          href: `profile??id=${encodeURIComponent(r?.requester_id ?? '')}`,
+          href: `profile?id=${encodeURIComponent(r?.requester_id ?? '')}`,
           initial: (reqDisplayName || 'U')[0]?.toUpperCase?.() || 'U',
           rightHtml: right,
           accent: true,
@@ -460,7 +460,7 @@ async function init() {
           return renderPersonRow({
             title: searchDisplayName,
             subtitle,
-            href: `profile??id=${encodeURIComponent(u?.id ?? '')}`,
+            href: `profile?id=${encodeURIComponent(u?.id ?? '')}`,
             initial: (searchDisplayName || 'U')[0]?.toUpperCase?.() || 'U',
             rightHtml: rightParts.join(' '),
             dataAttrs: { user_id: u?.id ?? '', friendship_id: u?.friendship_id ?? '' },

@@ -59,7 +59,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -135,7 +135,7 @@ function renderRowCard(b) {
   const storedId = String(b?.restaurant_id || '');
   // nameSlug is for page navigation only — derived from the restaurant name
   const nameSlug = b?.slug || (b?.name ? b.name.toLowerCase().replace(/\s+/g, '-') : storedId);
-  const href = nameSlug ? `restaurant??slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
+  const href = nameSlug ? `restaurant?slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
   const imgUrl = b?.image_url || b?.images?.[0] || '';
   const when = formatWhen(b?.added_at);
 

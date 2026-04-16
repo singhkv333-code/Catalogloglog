@@ -152,8 +152,8 @@ function init() {
       document.getElementById('fullName')?.focus();
       return;
     }
-    if (!/^[a-zA-Z\s'-]+$/.test(fullName)) {
-      setError('fullNameError', 'Full name can only contain letters, spaces, hyphens, and apostrophes.');
+    if (!/^[a-zA-Z\s']+$/.test(fullName)) {
+      setError('fullNameError', 'Full name can only contain letters and spaces.');
       document.getElementById('fullName')?.focus();
       return;
     }

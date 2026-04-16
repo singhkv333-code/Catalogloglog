@@ -61,7 +61,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -349,7 +349,7 @@ function openCreateListModal({ onCreate }) {
       const created = await onCreate({ title, description: description || null, is_public: isPublic });
       close();
       if (created?.id != null) {
-        window.location.href = `list??id=${encodeURIComponent(created.id)}`;
+        window.location.href = `list?id=${encodeURIComponent(created.id)}`;
       }
     } catch (ex) {
       if (err) {
@@ -487,7 +487,7 @@ async function init() {
     if (!card) return;
     const id = card.getAttribute('data-id');
     if (!id) return;
-    window.location.href = `list??id=${encodeURIComponent(id)}`;
+    window.location.href = `list?id=${encodeURIComponent(id)}`;
   });
 
   await refresh();

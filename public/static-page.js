@@ -47,7 +47,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user?.id ?? ''
     )}">Profile</a>
     <button id="navLogoutBtn" class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button">Log out</button>

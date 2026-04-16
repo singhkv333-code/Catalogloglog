@@ -79,7 +79,7 @@ function linkifyRestaurants(escapedText, restaurants) {
     const esc = escapeHtml(name); // match against already-escaped paragraph content
     const key = esc.toLowerCase();
     if (!esc || nameToLink.has(key)) continue;
-    const href = `restaurant??slug=${encodeURIComponent(slug)}`;
+    const href = `restaurant?slug=${encodeURIComponent(slug)}`;
     nameToLink.set(key, `<a href="${href}" class="catalog-restaurant-link">${esc}</a>`);
     patterns.push(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   }
@@ -154,7 +154,7 @@ function wireAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(user?.id ?? '')}">Profile</a>
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(user?.id ?? '')}">Profile</a>
     <button id="navLogoutBtn" class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button">Log out</button>
   `;
   document.body.appendChild(menu);
@@ -305,7 +305,7 @@ async function fetchPostBySlug(slug) {
 // ─── Card templates ───────────────────────────────────────────────────────────
 
 function indexCardHtml(post) {
-  const href = `blog??slug=${encodeURIComponent(post.slug)}`;
+  const href = `blog?slug=${encodeURIComponent(post.slug)}`;
   return `
     <a href="${href}" class="group bg-surface-container-lowest rounded-2xl overflow-hidden editorial-shadow hover:-translate-y-0.5 transition-all duration-300 border border-on-surface/5 flex flex-col">
       <div class="aspect-[16/9] overflow-hidden flex-none">
@@ -333,7 +333,7 @@ function indexCardHtml(post) {
 }
 
 function featuredCardHtml(post) {
-  const href = `blog??slug=${encodeURIComponent(post.slug)}`;
+  const href = `blog?slug=${encodeURIComponent(post.slug)}`;
   return `
     <a href="${href}" class="group relative block rounded-3xl overflow-hidden editorial-shadow" style="height:520px;">
       <!-- Full-bleed image -->
@@ -1121,7 +1121,7 @@ function renderRelatedPosts(allPosts, currentSlug) {
   el.innerHTML = related
     .map(
       (p) => `
-      <a href="blog??slug=${encodeURIComponent(p.slug)}" class="group flex items-start gap-4 hover:opacity-90 transition-opacity">
+      <a href="blog?slug=${encodeURIComponent(p.slug)}" class="group flex items-start gap-4 hover:opacity-90 transition-opacity">
         <div class="w-16 h-16 rounded-xl overflow-hidden flex-none bg-surface-container-low">
           <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="${escapeHtml(p.heroImage)}" alt="${escapeHtml(p.title)}" loading="lazy" />
         </div>

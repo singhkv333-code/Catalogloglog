@@ -73,7 +73,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user?.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -752,7 +752,7 @@ async function hydrateFriendsRating({ token, slug }) {
           `<span class="material-symbols-outlined text-[13px]" style="font-variation-settings:'FILL' ${i < starCount ? 1 : 0},'wght' 400,'GRAD' 0,'opsz' 24;color:${i < starCount ? '#690008' : 'rgba(88,65,63,0.35)'}">star</span>`
         ).join('');
         return `
-          <a class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors" href="profile??id=${encodeURIComponent(String(f.id))}">
+          <a class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors" href="profile?id=${encodeURIComponent(String(f.id))}">
             <div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-xs font-bold flex-none border border-on-surface/10">${escapeHtml(init)}</div>
             <div class="font-label text-sm font-bold flex-1 truncate">${escapeHtml(String(f.username))}</div>
             <div class="flex items-center gap-0.5 flex-none">${starsHtml}</div>
@@ -814,7 +814,7 @@ async function hydrateFriendsBeenHere({ token, slug }) {
   friends.slice(0, 3).forEach((f) => {
     const initial = String(f.username || 'U')[0]?.toUpperCase?.() || 'U';
     const chip = document.createElement('a');
-    chip.href = `profile??id=${encodeURIComponent(String(f.id))}`;
+    chip.href = `profile?id=${encodeURIComponent(String(f.id))}`;
     chip.className =
       'w-7 h-7 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-[11px] font-bold border-2 border-surface-container-lowest';
     chip.textContent = initial;
@@ -825,7 +825,7 @@ async function hydrateFriendsBeenHere({ token, slug }) {
     .map((f) => {
       const initial = String(f.username || 'U')[0]?.toUpperCase?.() || 'U';
       return `
-        <a class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors" href="profile??id=${encodeURIComponent(
+        <a class="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-container-low transition-colors" href="profile?id=${encodeURIComponent(
           String(f.id)
         )}">
           <div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-xs font-bold border border-on-surface/10">${escapeHtml(

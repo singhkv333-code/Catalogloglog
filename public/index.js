@@ -63,7 +63,7 @@ function ensureAccountDropdown({ user }) {
       </div>
     </div>
     <div class="h-px w-full bg-on-surface/10 my-4"></div>
-    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile??id=${encodeURIComponent(
+    <a class="block font-label text-sm py-2 hover:text-primary transition-colors" href="profile?id=${encodeURIComponent(
       user.id ?? ''
     )}">View profile</a>
     <button class="w-full text-left font-label text-sm py-2 hover:text-primary transition-colors" type="button" id="navLogoutBtn">Log out</button>
@@ -176,7 +176,7 @@ function hydratePopularCardFeature(cardEl, restaurant) {
   const badge = cardEl.querySelector('span.bg-primary-container');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
+  const clickUrl = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -215,7 +215,7 @@ function hydratePopularCardSmall(cardEl, restaurant) {
   const meta = cardEl.querySelector('p');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
+  const clickUrl = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -350,7 +350,7 @@ function setupHomeSearch() {
     list.forEach((r) => {
       const slug = r.slug || r.id || '';
       const a = document.createElement('a');
-      a.href = pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`);
+      a.href = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
       a.className =
         'flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors w-full text-left';
 
@@ -555,7 +555,7 @@ async function hydrateCuratedLists({ token }) {
     card.style.cursor = 'pointer';
     card.onclick = () => {
       const id = list?.id ?? '';
-      window.location.href = `list??id=${encodeURIComponent(id)}`;
+      window.location.href = `list?id=${encodeURIComponent(id)}`;
     };
   });
 }
@@ -616,7 +616,7 @@ async function hydrateJournal() {
     article.style.display = '';
 
     const b = normalized[i];
-    const href = `blog??slug=${encodeURIComponent(b.slug)}`;
+    const href = `blog?slug=${encodeURIComponent(b.slug)}`;
 
     const imgWrap = article.querySelector('.aspect-video');
     const img = article.querySelector('img');
@@ -750,7 +750,7 @@ async function hydrateFriendActivity({ token }) {
 
     const slug = item?.slug || '';
     const href = slug
-      ? pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`)
+      ? pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`)
       : pageUrl('restaurant');
 
     const target = cardSlots[idx];
@@ -780,7 +780,7 @@ async function hydrateFriendActivity({ token }) {
       if (skeletonAvatar) skeletonAvatar.remove();
 
       const friendProfileHref = item?.friend_id
-        ? pageUrl(`profile??id=${encodeURIComponent(item.friend_id)}`)
+        ? pageUrl(`profile?id=${encodeURIComponent(item.friend_id)}`)
         : null;
 
       let avatarChip = header.querySelector('[data-avatar-chip="1"]');
@@ -884,7 +884,7 @@ async function hydrateRecentlyVisited({ token, userId }) {
     const v = list[i];
     const slug = v?.slug || v?.restaurant_id || '';
     const href = slug
-      ? pageUrl(`restaurant??slug=${encodeURIComponent(slug)}`)
+      ? pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`)
       : pageUrl('restaurant');
     card.style.cursor = 'pointer';
     card.onclick = () => {
