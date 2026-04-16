@@ -8,6 +8,7 @@ const app = express()
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const pool = require('./db')
+const { cacheGet, cacheSet, cacheDel, cacheDelPattern, TTL } = require('./cache')
 const cors = require('cors')
 const nodemailer = require('nodemailer')
 
@@ -287,6 +288,11 @@ async function updateRatingSummary(restaurantId) {
        average_rating=$2, total_ratings=$3, total_reviews=$4, last_updated=NOW()`,
     [restaurantId, avg, total_ratings, total_reviews]
   )
+  // Invalidate all caches that include rating data for this restaurant
+  await Promise.all([
+    cacheDel(`ratings:restaurant:${restaurantId}`),
+    cacheDelPattern('restaurants:popular:*'),
+  ])
   return { average_rating: avg, total_ratings, total_reviews }
 }
 
@@ -311,18 +317,25 @@ async function optionalAuth(req, res, next) {
 
 app.get('/restaurants/random', async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 6, 20)
+  const cacheKey = `restaurants:random:${limit}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT id, name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug
        FROM restaurants WHERE name IS NOT NULL ORDER BY RANDOM() LIMIT $1`,
       [limit]
     )
+    await cacheSet(cacheKey, r.rows, TTL.RESTAURANTS_RANDOM)
     res.json(r.rows)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 app.get('/restaurants/popular', async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 12, 20)
+  const cacheKey = `restaurants:popular:${limit}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT r.id, r.name, r.area, r.cuisine, r.image_url,
@@ -336,12 +349,16 @@ app.get('/restaurants/popular', async (req, res) => {
        LIMIT $1`,
       [limit]
     )
+    await cacheSet(cacheKey, r.rows, TTL.RESTAURANTS_POPULAR)
     res.json(r.rows)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 app.get('/restaurants', async (req, res) => {
   const { search = '', area = '', cuisine = '' } = req.query
+  const cacheKey = `restaurants:list:${search.toLowerCase()}:${area.toLowerCase()}:${cuisine.toLowerCase()}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT id, name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug
@@ -352,12 +369,17 @@ app.get('/restaurants', async (req, res) => {
        ORDER BY name`,
       [`%${search.toLowerCase()}%`, area, cuisine]
     )
-    res.json(r.rows.map(row => ({ ...row, images: row.image_url ? [row.image_url] : [] })))
+    const result = r.rows.map(row => ({ ...row, images: row.image_url ? [row.image_url] : [] }))
+    await cacheSet(cacheKey, result, TTL.RESTAURANTS_LIST)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 app.get('/restaurants/:slug', async (req, res) => {
   const slug = req.params.slug.toLowerCase().replace(/\s+/g, '-')
+  const cacheKey = `restaurant:slug:${slug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT id, name, area, cuisine, image_url, images, opening_hours
@@ -369,6 +391,7 @@ app.get('/restaurants/:slug', async (req, res) => {
     const dbImages = row.images || []
     row.images = dbImages.length ? dbImages : (row.image_url ? [row.image_url] : [])
     row.slug = slug
+    await cacheSet(cacheKey, row, TTL.RESTAURANT_DETAIL)
     res.json(row)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -381,6 +404,9 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
   const { restaurantId } = req.params
   const limit = parseInt(req.query.limit) || 20
   const offset = parseInt(req.query.offset) || 0
+  const cacheKey = `reviews:restaurant:${restaurantId}:${limit}:${offset}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const slugRes = await pool.query(
       `SELECT id, LOWER(REPLACE(name,' ','-')) AS slug FROM restaurants WHERE id::text=$1 LIMIT 1`,
@@ -397,7 +423,9 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
       [idForms, limit, offset]
     )
     const total = await pool.query(`SELECT COUNT(*) FROM reviews WHERE restaurant_id = ANY($1)`, [idForms])
-    res.json({ reviews: r.rows, total: parseInt(total.rows[0].count), limit, offset })
+    const result = { reviews: r.rows, total: parseInt(total.rows[0].count), limit, offset }
+    await cacheSet(cacheKey, result, TTL.REVIEWS_LIST)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -417,6 +445,8 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
       [req.user.id, restaurant_id, content, rating || null, visit_date || null]
     )
     await updateRatingSummary(restaurant_id)
+    // Invalidate review list cache for this restaurant (all paginations)
+    await cacheDelPattern(`reviews:restaurant:${restaurant_id}:*`)
     try {
       const beenEx = await pool.query(
         `SELECT id FROM visits WHERE user_id=$1 AND restaurant_id=$2`,
@@ -452,6 +482,7 @@ app.put('/api/reviews/:reviewId', authMiddleware, async (req, res) => {
     if (visit_date != null) { updates.push(`visit_date=$${params.push(visit_date)}`)}
     await pool.query(`UPDATE reviews SET ${updates.join(',')} WHERE id=$1`, params)
     await updateRatingSummary(existing.rows[0].restaurant_id)
+    await cacheDelPattern(`reviews:restaurant:${existing.rows[0].restaurant_id}:*`)
     res.json({ success: true, message: 'Review updated' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -466,6 +497,7 @@ app.delete('/api/reviews/:reviewId', authMiddleware, async (req, res) => {
     if (!existing.rows.length) return res.status(404).json({ message: 'Review not found or not authorized' })
     await pool.query(`DELETE FROM reviews WHERE id=$1`, [reviewId])
     await updateRatingSummary(existing.rows[0].restaurant_id)
+    await cacheDelPattern(`reviews:restaurant:${existing.rows[0].restaurant_id}:*`)
     res.json({ success: true, message: 'Review deleted' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -518,6 +550,9 @@ app.delete('/api/reviews/:reviewId/like', authMiddleware, async (req, res) => {
 
 app.get('/api/reviews/:reviewId/replies', async (req, res) => {
   const { reviewId } = req.params
+  const cacheKey = `replies:review:${reviewId}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT rr.id, rr.review_id, rr.user_id, rr.parent_id, rr.content, rr.created_at, u.username
@@ -525,7 +560,9 @@ app.get('/api/reviews/:reviewId/replies', async (req, res) => {
        WHERE rr.review_id=$1 ORDER BY rr.created_at ASC`,
       [reviewId]
     )
-    res.json({ replies: r.rows })
+    const result = { replies: r.rows }
+    await cacheSet(cacheKey, result, TTL.REPLIES)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -540,6 +577,7 @@ app.post('/api/reviews/:reviewId/replies', authMiddleware, async (req, res) => {
        VALUES ($1,$2,$3,$4,NOW()) RETURNING id, review_id, user_id, parent_id, content, created_at`,
       [reviewId, req.user.id, parent_id || null, content]
     )
+    await cacheDel(`replies:review:${reviewId}`)
     res.json({ success: true, reply: { ...r.rows[0], username: req.user.username || 'User' } })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -553,6 +591,7 @@ app.delete('/api/reviews/:reviewId/replies/:replyId', authMiddleware, async (req
     )
     if (!ex.rows.length) return res.status(404).json({ message: 'Reply not found or not authorized' })
     await pool.query(`DELETE FROM review_replies WHERE id=$1 OR parent_id=$1`, [replyId])
+    await cacheDel(`replies:review:${reviewId}`)
     res.json({ success: true, message: 'Reply deleted' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -575,6 +614,9 @@ app.get('/api/ratings/:restaurantId/user', authMiddleware, async (req, res) => {
 
 app.get('/api/ratings/:restaurantId', async (req, res) => {
   const { restaurantId } = req.params
+  const cacheKey = `ratings:restaurant:${restaurantId}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const dist = await pool.query(
       `SELECT stars, COUNT(*) AS count FROM ratings WHERE restaurant_id=$1 GROUP BY stars ORDER BY stars DESC`,
@@ -593,7 +635,9 @@ app.get('/api/ratings/:restaurantId', async (req, res) => {
     const priced = allRatings.rows.filter(r => r.price_range)
     const avg_price = priced.length ? Math.round(priced.reduce((s, r) => s + r.price_range, 0) / priced.length) : null
     const s = summary.rows[0] || { average_rating: 0, total_ratings: 0, total_reviews: 0 }
-    res.json({ ...s, distribution: distMap, ratings: allRatings.rows, average_price_range: avg_price })
+    const result = { ...s, distribution: distMap, ratings: allRatings.rows, average_price_range: avg_price }
+    await cacheSet(cacheKey, result, TTL.RATINGS_SUMMARY)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -728,6 +772,10 @@ app.get('/api/public-lists', optionalAuth, async (req, res) => {
   const limit = parseInt(req.query.limit) || 3
   const search = (req.query.search || '').trim()
   const uid = req.user ? req.user.id : null
+  // Cache per uid so liked_by_user is always correct; invalidated on like/unlike writes
+  const cacheKey = `lists:public:${search.toLowerCase()}:${limit}:${uid || 'anon'}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT l.id, l.title, l.description, l.user_id, u.username AS owner_username,
@@ -758,7 +806,9 @@ app.get('/api/public-lists', optionalAuth, async (req, res) => {
         liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: prev.rows
       }
     }))
-    res.json({ lists })
+    const result = { lists }
+    await cacheSet(cacheKey, result, TTL.LISTS_PUBLIC)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -766,6 +816,9 @@ app.get('/api/lists/public', optionalAuth, async (req, res) => {
   const limit = parseInt(req.query.limit) || 3
   const search = (req.query.search || '').trim()
   const uid = req.user ? req.user.id : null
+  const cacheKey = `lists:public:${search.toLowerCase()}:${limit}:${uid || 'anon'}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT l.id, l.title, l.description, l.user_id, u.username AS owner_username,
@@ -796,7 +849,9 @@ app.get('/api/lists/public', optionalAuth, async (req, res) => {
         liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: prev.rows
       }
     }))
-    res.json({ lists })
+    const result = { lists }
+    await cacheSet(cacheKey, result, TTL.LISTS_PUBLIC)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -838,6 +893,9 @@ app.post('/api/lists', authMiddleware, async (req, res) => {
 app.get('/api/lists/:listId/public', optionalAuth, async (req, res) => {
   const { listId } = req.params
   const uid = req.user ? req.user.id : null
+  const cacheKey = `list:public:${listId}:${uid || 'anon'}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT l.id, l.title, l.description, l.user_id, u.username AS owner_username,
@@ -862,12 +920,14 @@ app.get('/api/lists/:listId/public', optionalAuth, async (req, res) => {
       )
       return rest.rows.length ? { ...rest.rows[0], notes: item.notes } : null
     }))).filter(Boolean)
-    res.json({
+    const result = {
       list: { id: lst.id, title: lst.title, description: lst.description, item_count: parseInt(lst.item_count),
               owner_id: lst.user_id, owner_username: lst.owner_username,
               likes_count: parseInt(lst.likes_count || 0), liked_by_user: Boolean(lst.liked_by_user) },
       restaurants
-    })
+    }
+    await cacheSet(cacheKey, result, TTL.LIST_DETAIL)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -923,6 +983,10 @@ app.put('/api/lists/:listId', authMiddleware, async (req, res) => {
     if (description != null) { updates.push(`description=$${params.push(description)}`) }
     if (is_public != null)   { updates.push(`is_public=$${params.push(is_public)}`) }
     await pool.query(`UPDATE lists SET ${updates.join(',')} WHERE id=$1`, params)
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, message: 'List updated' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -932,6 +996,10 @@ app.delete('/api/lists/:listId', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query(`DELETE FROM lists WHERE id=$1 AND user_id=$2`, [listId, req.user.id])
     if (r.rowCount === 0) return res.status(404).json({ message: 'List not found or not authorized' })
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, message: 'List deleted' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -946,6 +1014,10 @@ app.delete('/api/lists/:listId/items/by-restaurant/:restaurantId', authMiddlewar
     )
     if (r.rowCount === 0) return res.status(404).json({ message: 'Item not found or not authorized' })
     await pool.query(`UPDATE lists SET updated_at=NOW() WHERE id=$1`, [listId])
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, message: 'Item removed' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -962,6 +1034,10 @@ app.post('/api/lists/:listId/items', authMiddleware, async (req, res) => {
       [listId, restaurant_id, pos.rows[0].next_pos, notes || null]
     )
     await pool.query(`UPDATE lists SET updated_at=NOW() WHERE id=$1`, [listId])
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, item_id: r.rows[0].id })
   } catch (err) {
     if (err.code === '23505') return res.status(400).json({ message: 'Restaurant already in list' })
@@ -978,6 +1054,10 @@ app.delete('/api/lists/:listId/items/:itemId', authMiddleware, async (req, res) 
     )
     if (r.rowCount === 0) return res.status(404).json({ message: 'Item not found or not authorized' })
     await pool.query(`UPDATE lists SET updated_at=NOW() WHERE id=$1`, [listId])
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, message: 'Item removed' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1004,6 +1084,10 @@ app.post('/api/lists/:listId/like', authMiddleware, async (req, res) => {
     if (!lst.rows[0].is_public) return res.status(403).json({ message: 'Only public lists can be liked' })
     await pool.query(`INSERT INTO list_likes (user_id, list_id, created_at) VALUES ($1,$2,NOW()) ON CONFLICT DO NOTHING`, [req.user.id, listId])
     const cnt = await pool.query(`SELECT COUNT(*) AS cnt FROM list_likes WHERE list_id=$1`, [listId])
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, liked: true, likes_count: parseInt(cnt.rows[0].cnt) })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1013,6 +1097,10 @@ app.delete('/api/lists/:listId/like', authMiddleware, async (req, res) => {
   try {
     await pool.query(`DELETE FROM list_likes WHERE user_id=$1 AND list_id=$2`, [req.user.id, listId])
     const cnt = await pool.query(`SELECT COUNT(*) AS cnt FROM list_likes WHERE list_id=$1`, [listId])
+    await Promise.all([
+      cacheDelPattern(`list:public:${listId}:*`),
+      cacheDelPattern('lists:public:*'),
+    ])
     res.json({ success: true, liked: false, likes_count: parseInt(cnt.rows[0].cnt) })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
