@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "outputDirectory": "public",
+  "functions": {
+    "api/server.js": {
+      "memory": 512,
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/server" },
+    { "source": "/restaurants/(.*)", "destination": "/api/server" },
+    { "source": "/restaurants", "destination": "/api/server" },
+    { "source": "/signup", "destination": "/api/server" },
+    { "source": "/verify-otp", "destination": "/api/server" },
+    { "source": "/login", "destination": "/api/server" },
+    { "source": "/set-username", "destination": "/api/server" },
+    { "source": "/profile", "destination": "/api/server" },
+    { "source": "/db-test", "destination": "/api/server" }
+  ]
+}

@@ -1,0 +1,307 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Create Account — Catalog</title>
+
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .editorial-shadow {
+        box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .glass-nav {
+        backdrop-filter: blur(16px);
+        background-color: rgba(254, 249, 241, 0.8);
+      }
+</style>
+
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+      <div class="flex justify-between items-center w-full px-12 py-8 max-w-screen-2xl mx-auto">
+        <div class="flex items-center gap-12">
+          <a class="text-3xl font-headline italic text-[#1d1b17] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+        </div>
+        <div class="flex items-center gap-4">
+          <span class="font-label text-xs opacity-60">Already have an account?</span>
+          <a class="font-label text-xs font-bold uppercase tracking-widest text-primary hover:opacity-80 transition-opacity" href="login.html">Sign in</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="pt-32 pb-24 px-6">
+      <div class="max-w-lg mx-auto">
+
+        <!-- Step indicator -->
+        <div class="flex items-center gap-3 mb-8 justify-center" id="stepIndicator">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label transition-all" id="dot1"></div>
+            <span class="font-label text-[10px] uppercase tracking-widest opacity-50" id="dotLabel1">Credentials</span>
+          </div>
+          <div class="w-8 h-px bg-on-surface/20"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold font-label transition-all" id="dot2"></div>
+            <span class="font-label text-[10px] uppercase tracking-widest opacity-50" id="dotLabel2">Your profile</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Email + Password -->
+        <div id="stepCredentials" class="bg-surface-container-lowest rounded-xl editorial-shadow p-10">
+          <div class="mb-10">
+            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Step 1 of 2</p>
+            <h1 class="font-headline text-4xl italic leading-tight">Create your account</h1>
+            <p class="font-body text-on-surface-variant mt-3 text-sm leading-relaxed">
+              Join Catalog to track, discover, and share the restaurants you love.
+            </p>
+          </div>
+
+          <form id="credentialsForm" class="space-y-6" novalidate>
+            <!-- Email -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="email">Email</label>
+              <input
+                class="w-full bg-surface-container-lowest py-4 px-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+                required
+              />
+              <p class="font-label text-sm text-error mt-2 hidden" id="emailError"></p>
+            </div>
+
+            <!-- Password -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="password">Password</label>
+              <div class="relative">
+                <input
+                  class="w-full bg-surface-container-lowest py-4 px-5 pr-14 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="At least 8 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  id="togglePassword"
+                  class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/60 hover:text-on-surface transition-colors text-lg"
+                  aria-label="Toggle password visibility"
+                >visibility_off</button>
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="confirmPassword">Confirm password</label>
+              <div class="relative">
+                <input
+                  class="w-full bg-surface-container-lowest py-4 px-5 pr-14 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autocomplete="new-password"
+                  placeholder="Re-enter your password"
+                  required
+                />
+                <button
+                  type="button"
+                  id="toggleConfirmPassword"
+                  class="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/60 hover:text-on-surface transition-colors text-lg"
+                  aria-label="Toggle password visibility"
+                >visibility_off</button>
+              </div>
+              <p class="font-label text-sm text-error mt-2 hidden" id="confirmPasswordError">Passwords don't match.</p>
+            </div>
+
+            <div class="pt-2">
+              <button
+                class="w-full bg-primary text-on-primary py-4 px-8 rounded-full font-label text-sm font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow"
+                id="nextBtn"
+                type="submit"
+              >
+                Next
+              </button>
+              <p class="font-label text-sm text-error mt-4 hidden" id="credentialsError"></p>
+            </div>
+          </form>
+
+          <p class="font-label text-xs opacity-50 mt-8 text-center leading-relaxed">
+            By creating an account you agree to our
+            <a href="terms.html" class="underline hover:opacity-80 transition-opacity">Terms of Service</a>.
+          </p>
+        </div>
+
+        <!-- Step 2: Name + Username -->
+        <div id="stepProfile" class="hidden bg-surface-container-lowest rounded-xl editorial-shadow p-10">
+          <div class="mb-10">
+            <p class="font-label uppercase tracking-widest text-xs text-primary mb-3">Step 2 of 2</p>
+            <h1 class="font-headline text-4xl italic leading-tight">Tell us about you</h1>
+            <p class="font-body text-on-surface-variant mt-3 text-sm leading-relaxed">
+              How should other food lovers know you on Catalog?
+            </p>
+          </div>
+
+          <form id="profileForm" class="space-y-6" novalidate>
+            <!-- Full Name -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="fullName">Full name</label>
+              <input
+                class="w-full bg-surface-container-lowest py-4 px-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                id="fullName"
+                name="fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="e.g. Alex Johnson"
+                required
+              />
+              <p class="font-label text-sm text-error mt-2 hidden" id="fullNameError"></p>
+            </div>
+
+            <!-- Username -->
+            <div>
+              <label class="block font-label text-sm font-bold mb-2" for="username">Username</label>
+              <div class="relative">
+                <span class="absolute left-5 top-1/2 -translate-y-1/2 font-label text-on-surface-variant/50 text-base select-none">@</span>
+                <input
+                  class="w-full bg-surface-container-lowest py-4 pl-9 pr-5 rounded-full editorial-shadow focus:ring-2 focus:ring-primary-container outline-none text-base font-body placeholder:text-on-surface-variant/40"
+                  id="username"
+                  name="username"
+                  type="text"
+                  autocomplete="username"
+                  placeholder="yourhandle"
+                  required
+                />
+              </div>
+              <p class="font-label text-[11px] opacity-50 mt-1.5">Letters, numbers, and underscores only.</p>
+              <p class="font-label text-sm text-error mt-2 hidden" id="usernameError"></p>
+            </div>
+
+            <div class="pt-2 flex flex-col gap-3">
+              <button
+                class="w-full bg-primary text-on-primary py-4 px-8 rounded-full font-label text-sm font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow"
+                id="createAccountBtn"
+                type="submit"
+              >
+                Create account
+              </button>
+              <button
+                class="w-full text-on-surface-variant py-3 px-8 rounded-full font-label text-sm tracking-widest hover:opacity-70 transition-opacity"
+                id="backToCredentials"
+                type="button"
+              >
+                ← Back
+              </button>
+              <p class="font-label text-sm text-error mt-2 hidden" id="profileError"></p>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </main>
+
+    <footer class="bg-[#1c1410] w-full px-12 py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
+      <div class="flex gap-8 mt-4">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 transition-all" href="terms.html">Terms of Service</a>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./signup.js"></script>
+  </body>
+</html>

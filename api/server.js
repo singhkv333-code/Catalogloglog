@@ -1,8 +1,8 @@
-// server.js — lives inside "New Catalog/" and serves it as the static root.
-// All auth/profile API routes are here so the frontend JS can call them at the same origin (port 4000).
+// api/server.js — Express app exported as a Vercel serverless function.
+// Static files are served by Vercel from /public; this handler covers all API/backend routes.
 
 const path = require('path')
-require('dotenv').config({ path: path.join(__dirname, '.env') })
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') })
 const express = require('express')
 const app = express()
 const bcrypt = require('bcryptjs')
@@ -12,23 +12,16 @@ const cors = require('cors')
 const nodemailer = require('nodemailer')
 
 const JWT_SECRET = process.env.JWT_SECRET
-const PORT = process.env.PORT || 4000
-
 const SUPABASE_URL = 'https://pjsyvlhwuhdibpahputx.supabase.co'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBqc3l2bGh3dWhkaWJwYWhwdXR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3OTE2OTMsImV4cCI6MjA4NTM2NzY5M30._5uc9ukbShs4kVblc8EpkQYTF6aFTth1vcXEJPQixxw'
 
 app.use(cors())
 app.use(express.json())
 
-// Serve New Catalog static files — this directory is __dirname so no path resolution needed.
-app.use(express.static(__dirname))
-
 // Add name column if it doesn't exist yet (idempotent migration)
 pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT`).catch(() => {})
 
 // ================== SUPABASE JWT RESOLVER ==================
-// Verifies a Supabase access token and returns the matching public.users row.
-// If the user doesn't exist in public.users yet (new Supabase signup), creates them.
 async function resolveSupabaseUser(token) {
   const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
@@ -38,10 +31,8 @@ async function resolveSupabaseUser(token) {
   const email = supaUser?.email
   if (!email) return null
 
-  // Look up the integer user row
   let row = await pool.query('SELECT id, email, username, name FROM users WHERE email = $1', [email])
   if (!row.rows.length) {
-    // Auto-create the user in public.users so existing routes work unchanged
     const username = supaUser.user_metadata?.username || email.split('@')[0]
     const name = supaUser.user_metadata?.full_name || username
     row = await pool.query(
@@ -52,7 +43,7 @@ async function resolveSupabaseUser(token) {
       [email, username, name]
     )
   }
-  return row.rows[0] // { id (integer), email, username, name }
+  return row.rows[0]
 }
 
 // ================== AUTH MIDDLEWARE ==================
@@ -61,13 +52,11 @@ async function authMiddleware(req, res, next) {
   if (!authHeader) return res.status(401).json({ message: 'No token provided' })
   const token = authHeader.split(' ')[1]
 
-  // Try Supabase JWT first
   try {
     const user = await resolveSupabaseUser(token)
     if (user) { req.user = user; return next() }
   } catch { /* fall through */ }
 
-  // Fall back to old Express JWT (backwards compat)
   try {
     req.user = jwt.verify(token, JWT_SECRET)
     next()
@@ -87,8 +76,6 @@ const transporter = nodemailer.createTransport({
 })
 
 // ================== ME ==================
-// Returns the integer DB user id for the currently authenticated user.
-// Frontend uses this to resolve the Supabase UUID → integer id.
 app.get('/api/me', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query('SELECT id, email, username, name, bio FROM users WHERE id=$1', [req.user.id])
@@ -116,7 +103,7 @@ app.post('/signup', async (req, res) => {
       [email, hashedPassword, otp, otpExpires]
     )
     const mailOptions = {
-      from: 'Catalog <sirkn16@gmail.com>',
+      from: 'Catalog <info@catalogapp.in>',
       to: email,
       subject: 'Your Catalog Verification Code',
       html: `<p>Hi there!</p><p>Your verification code is: <strong>${otp}</strong></p><p>This code expires in 10 minutes.</p>`,
@@ -161,7 +148,6 @@ app.post('/login', async (req, res) => {
   const { email, password } = req.body
   if (!email || !password) return res.status(400).json({ message: 'Email and password required' })
 
-  // Dev login
   if (email.trim().toLowerCase() === 'dev@catalog.com' && password === 'devpassword123') {
     try {
       let devUser = await pool.query('SELECT id, username FROM users WHERE email = $1', ['dev@catalog.com'])
@@ -396,7 +382,6 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
   const limit = parseInt(req.query.limit) || 20
   const offset = parseInt(req.query.offset) || 0
   try {
-    // Resolve all possible restaurant_id forms (integer id or slug) for this restaurant
     const slugRes = await pool.query(
       `SELECT id, LOWER(REPLACE(name,' ','-')) AS slug FROM restaurants WHERE id::text=$1 LIMIT 1`,
       [restaurantId]
@@ -419,7 +404,6 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
 app.post('/api/reviews', authMiddleware, async (req, res) => {
   const { restaurant_id, content, rating, visit_date } = req.body
   try {
-    // Enforce one review per user per restaurant
     const existing = await pool.query(
       `SELECT id FROM reviews WHERE user_id=$1 AND restaurant_id=$2`,
       [req.user.id, restaurant_id]
@@ -433,7 +417,6 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
       [req.user.id, restaurant_id, content, rating || null, visit_date || null]
     )
     await updateRatingSummary(restaurant_id)
-    // Auto-add to been if not already there
     try {
       const beenEx = await pool.query(
         `SELECT id FROM visits WHERE user_id=$1 AND restaurant_id=$2`,
@@ -511,7 +494,6 @@ app.post('/api/reviews/:reviewId/like', authMiddleware, async (req, res) => {
     if (!ex.rows.length) {
       await pool.query(`INSERT INTO review_likes (user_id, review_id, created_at) VALUES ($1,$2,NOW())`, [req.user.id, reviewId])
     }
-    // Always recount from source of truth to fix any counter drift
     const cnt = await pool.query(`SELECT COUNT(*) AS cnt FROM review_likes WHERE review_id=$1`, [reviewId])
     const trueCount = parseInt(cnt.rows[0].cnt)
     await pool.query(`UPDATE reviews SET likes_count=$1 WHERE id=$2`, [trueCount, reviewId])
@@ -523,7 +505,6 @@ app.delete('/api/reviews/:reviewId/like', authMiddleware, async (req, res) => {
   const { reviewId } = req.params
   try {
     await pool.query(`DELETE FROM review_likes WHERE user_id=$1 AND review_id=$2`, [req.user.id, reviewId])
-    // Always recount from source of truth to fix any counter drift
     const cnt = await pool.query(`SELECT COUNT(*) AS cnt FROM review_likes WHERE review_id=$1`, [reviewId])
     const trueCount = parseInt(cnt.rows[0].cnt)
     await pool.query(`UPDATE reviews SET likes_count=$1 WHERE id=$2`, [trueCount, reviewId])
@@ -719,7 +700,6 @@ app.delete('/api/visits/:restaurantId', authMiddleware, async (req, res) => {
   try {
     await pool.query(`DELETE FROM visits WHERE user_id=$1 AND restaurant_id=$2`, [req.user.id, restaurantId])
     console.log(`[SYNC] Removed been for restaurant ${restaurantId} user ${req.user.id}`)
-    // On been removal: delete the user's review and rating for this restaurant
     try {
       const revRows = await pool.query(
         `SELECT id FROM reviews WHERE user_id=$1 AND restaurant_id=$2`,
@@ -744,7 +724,6 @@ app.delete('/api/visits/:restaurantId', authMiddleware, async (req, res) => {
 // LISTS
 // ============================================================
 
-// These specific routes must be defined BEFORE /api/lists/:list_id
 app.get('/api/public-lists', optionalAuth, async (req, res) => {
   const limit = parseInt(req.query.limit) || 3
   const search = (req.query.search || '').trim()
@@ -915,10 +894,8 @@ app.get('/api/lists/:listId', optionalAuth, async (req, res) => {
        WHERE li.list_id=$1 ORDER BY li.position ASC`,
       [listId]
     )
-    // For any items where the JOIN still didn't resolve (legacy/odd slugs), try a fuzzy lookup
     const resolvedItems = await Promise.all(items.rows.map(async (item) => {
       if (item.name) return item
-      // Try matching by stripping non-alphanumeric chars
       try {
         const fallback = await pool.query(
           `SELECT name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug
@@ -959,7 +936,6 @@ app.delete('/api/lists/:listId', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
-// List items — by-restaurant must be before :item_id
 app.delete('/api/lists/:listId/items/by-restaurant/:restaurantId', authMiddleware, async (req, res) => {
   const { listId, restaurantId } = req.params
   try {
@@ -1057,7 +1033,6 @@ app.get('/api/restaurants/:restaurantId/in-lists', authMiddleware, async (req, r
 app.get('/api/restaurants/:slug/friends-rating', authMiddleware, async (req, res) => {
   const slug = req.params.slug.toLowerCase()
   try {
-    // Resolve slug to integer restaurant id
     const restRes = await pool.query(
       `SELECT id FROM restaurants WHERE LOWER(REPLACE(name,' ','-'))=$1 LIMIT 1`, [slug]
     )
@@ -1086,7 +1061,6 @@ app.get('/api/restaurants/:slug/friends-rating', authMiddleware, async (req, res
 app.get('/api/restaurants/:slug/friends-been', authMiddleware, async (req, res) => {
   const slug = req.params.slug.toLowerCase()
   try {
-    // Resolve slug to integer restaurant id
     const restRes = await pool.query(
       `SELECT id FROM restaurants WHERE LOWER(REPLACE(name,' ','-'))=$1 LIMIT 1`, [slug]
     )
@@ -1110,7 +1084,6 @@ app.get('/api/restaurants/:slug/friends-been', authMiddleware, async (req, res) 
 // USERS / FRIENDS
 // ============================================================
 
-// Specific /api/users/... routes before /api/users/:user_id/...
 app.get('/api/users/search', authMiddleware, async (req, res) => {
   const q = (req.query.q || '').trim()
   if (q.length < 2) return res.json({ users: [] })
@@ -1135,7 +1108,6 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
-// Specific /api/friends/... routes before /api/friends/:friendship_id/...
 app.get('/api/friends/requests', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query(
@@ -1322,4 +1294,5 @@ app.get('/api/users/:userId/reviews', authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`))
+// Export for Vercel — do NOT call app.listen()
+module.exports = app

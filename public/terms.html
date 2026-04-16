@@ -1,0 +1,343 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Terms — Catalog</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .editorial-shadow {
+        box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .glass-nav {
+        backdrop-filter: blur(16px);
+        background-color: rgba(254, 249, 241, 0.8);
+      }
+  /* Mobile nav */
+  #mobileMenu { max-height: 0; overflow: hidden; transition: max-height 350ms ease; }
+  #mobileMenu.open { max-height: 400px; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8 md:gap-12">
+      <a class="text-3xl font-headline italic text-[#1d1b17] dark:text-[#fef9f1] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="material-symbols-outlined text-on-surface hover:scale-95 transition-transform" data-icon="account_circle" id="navAccountBtn" type="button">account_circle</button>
+      <button class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" id="navHamburger" aria-label="Open menu" type="button">
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine1"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine2"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine3"></span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="md:hidden glass-nav border-t border-on-surface/10">
+    <div class="flex flex-col px-6 py-4 gap-5">
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false,skip=false;
+    if(!btn)return;
+    function closeMenu(){open=false;menu.classList.remove("open");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
+    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("open",open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
+    document.addEventListener("click",function(e){if(skip)return;if(open&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){closeMenu();}});
+  })();
+</script>
+
+    <main class="pt-24 md:pt-32 pb-16 md:pb-24">
+      <div class="max-w-screen-2xl mx-auto px-6 md:px-12">
+
+        <!-- Page header -->
+        <div class="mb-10 md:mb-14">
+          <span class="font-label uppercase tracking-widest text-xs text-primary mb-4 block">Legal</span>
+          <h1 class="font-headline text-5xl md:text-6xl lg:text-7xl italic tracking-tight text-on-surface leading-none mb-4">Terms of Service</h1>
+          <p class="font-body text-sm text-on-surface-variant">Effective: April 10, 2026 &nbsp;·&nbsp; Last updated: April 10, 2026</p>
+        </div>
+
+        <!-- Two-column: TOC left, content right -->
+        <div class="flex flex-col lg:flex-row gap-10 lg:gap-16 items-start">
+
+          <!-- Left: sticky TOC -->
+          <aside class="w-full lg:w-64 xl:w-72 shrink-0 lg:sticky lg:top-32">
+            <nav class="flex flex-col gap-3">
+              <p class="font-label text-[10px] uppercase tracking-widest text-on-surface-variant font-bold mb-1">On this page</p>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#acceptance">1. Acceptance of Terms</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#account">2. Your Account</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#content">3. User Content</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#acceptable">4. Acceptable Use</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#ip">5. Intellectual Property</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#third-party">6. Third-Party Services</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#disclaimers">7. Disclaimers</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#liability">8. Limitation of Liability</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#termination">9. Termination</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#law">10. Governing Law</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#changes">11. Changes to Terms</a>
+              <a class="font-body text-sm opacity-60 hover:opacity-100 hover:text-primary transition-colors" href="#contact">12. Contact Us</a>
+            </nav>
+            <div class="mt-8 pt-6 border-t border-on-surface/10">
+              <a href="privacy.html" class="flex items-center gap-2 font-body text-sm font-bold hover:text-primary transition-colors">
+                Privacy Policy
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+              </a>
+              <p class="font-body text-xs opacity-50 mt-1 leading-relaxed">What data we collect and how we use it.</p>
+            </div>
+          </aside>
+
+          <!-- Right: sections -->
+          <div class="flex-1 min-w-0 grid gap-6">
+
+            <div id="acceptance" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">1. Acceptance of Terms</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                Welcome to Catalog. These Terms of Service ("Terms") govern your access to and use of the Catalog platform, including our website, mobile applications, and related services (collectively, the "Service"), operated by Catalog ("we", "us", or "our"). By creating an account or using any part of our Service, you agree to be bound by these Terms. If you do not agree, you must not use the Service.
+              </p>
+              <p class="font-body text-sm opacity-80 leading-relaxed mt-4">
+                Please also read our <a class="underline underline-offset-4 hover:text-primary" href="privacy.html">Privacy Policy</a>, which is incorporated into these Terms by reference and describes how we collect, use, and protect your personal information.
+              </p>
+            </div>
+
+            <div id="account" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">2. Your Account</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed mb-4">
+                To access most features of Catalog you must register for an account. When creating your account you agree to:
+              </p>
+              <ul class="list-disc list-inside font-body text-sm opacity-80 leading-relaxed space-y-2 pl-2">
+                <li>Provide accurate, current, and complete information (including your full name and email address).</li>
+                <li>Maintain and promptly update your account information to keep it accurate.</li>
+                <li>Keep your password confidential and not share it with any third party.</li>
+                <li>Notify us immediately at <a class="underline underline-offset-4 hover:text-primary" href="mailto:info@catalogapp.in">info@catalogapp.in</a> if you suspect any unauthorised use of your account.</li>
+                <li>Accept responsibility for all activity that occurs under your account, whether or not authorised by you.</li>
+              </ul>
+              <p class="font-body text-sm opacity-80 leading-relaxed mt-4">
+                We reserve the right to suspend or terminate accounts that we reasonably believe are being used fraudulently, in violation of these Terms, or in a manner that could harm other users or the integrity of our platform.
+              </p>
+            </div>
+
+            <div id="content" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">3. User Content</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed mb-4">
+                Catalog allows you to post reviews, ratings, restaurant logs, curated lists, and other content ("User Content"). You retain ownership of User Content you create, but by posting it you grant Catalog a worldwide, non-exclusive, royalty-free, sublicensable licence to use, reproduce, modify, display, and distribute that content in connection with operating and improving the Service.
+              </p>
+              <p class="font-body text-sm opacity-80 leading-relaxed mb-4">You agree that your User Content will not:</p>
+              <ul class="list-disc list-inside font-body text-sm opacity-80 leading-relaxed space-y-2 pl-2">
+                <li>Be false, misleading, or defamatory.</li>
+                <li>Infringe any third-party intellectual property rights.</li>
+                <li>Contain hate speech, harassment, threats, or discriminatory content.</li>
+                <li>Include spam, advertising, or unsolicited promotional material.</li>
+                <li>Violate any applicable law or regulation, including Indian law.</li>
+              </ul>
+              <p class="font-body text-sm opacity-80 leading-relaxed mt-4">
+                We reserve the right (but not the obligation) to remove any User Content that violates these Terms or that we deem, in our sole discretion, to be harmful, offensive, or otherwise inappropriate.
+              </p>
+            </div>
+
+            <div id="acceptable" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">4. Acceptable Use</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed mb-4">When using Catalog you agree not to:</p>
+              <ul class="list-disc list-inside font-body text-sm opacity-80 leading-relaxed space-y-2 pl-2">
+                <li>Scrape, crawl, or otherwise systematically extract data from the Service without our express written permission.</li>
+                <li>Attempt to gain unauthorised access to any part of the Service or its underlying infrastructure.</li>
+                <li>Use automated scripts, bots, or other means to create accounts or interact with the Service.</li>
+                <li>Interfere with or disrupt the integrity or performance of the Service or its related systems.</li>
+                <li>Impersonate any person or entity, or falsely represent your affiliation with any person or entity.</li>
+                <li>Use the Service to engage in any illegal activity or to solicit others to engage in illegal activity.</li>
+              </ul>
+            </div>
+
+            <div id="ip" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">5. Intellectual Property</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                The Catalog name, logo, design, software, and all content produced by us (excluding User Content) are owned by or licensed to Catalog and are protected by intellectual property laws. You may not copy, modify, distribute, sell, or lease any part of our Service or its content without our prior written consent. Nothing in these Terms grants you any right to use our trademarks, logos, or brand features.
+              </p>
+            </div>
+
+            <div id="third-party" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">6. Third-Party Services</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                Catalog may link to or integrate with third-party websites and services (for example, mapping or restaurant data providers). These services are governed by their own terms and privacy policies, and we are not responsible for their content, practices, or availability. Your use of any third-party service is entirely at your own risk.
+              </p>
+            </div>
+
+            <div id="disclaimers" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">7. Disclaimers</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed mb-4">
+                The Service is provided on an "as is" and "as available" basis without warranties of any kind, whether express or implied. We do not warrant that:
+              </p>
+              <ul class="list-disc list-inside font-body text-sm opacity-80 leading-relaxed space-y-2 pl-2">
+                <li>The Service will be uninterrupted, secure, or error-free.</li>
+                <li>Any information (including restaurant details or user reviews) is accurate, complete, or up to date.</li>
+                <li>Any defects in the Service will be corrected.</li>
+              </ul>
+              <p class="font-body text-sm opacity-80 leading-relaxed mt-4">
+                To the fullest extent permitted by applicable Indian law, we disclaim all warranties, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
+              </p>
+            </div>
+
+            <div id="liability" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">8. Limitation of Liability</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                To the extent permitted by applicable Indian law, Catalog and its team shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Service. Nothing in these Terms limits liability for fraud, gross negligence, or any liability that cannot be excluded under Indian law, including the Information Technology Act, 2000 and rules thereunder.
+              </p>
+            </div>
+
+            <div id="termination" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">9. Termination</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                You may stop using the Service and delete your account at any time by contacting us at <a class="underline underline-offset-4 hover:text-primary" href="mailto:info@catalogapp.in">info@catalogapp.in</a>. We reserve the right to suspend or terminate your access to the Service at any time, with or without notice, for any reason including a violation of these Terms. Upon termination, your right to use the Service will immediately cease, though provisions that by their nature should survive (including ownership and disclaimers) will continue to apply.
+              </p>
+            </div>
+
+            <div id="law" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">10. Governing Law & Disputes</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                These Terms are governed by and construed in accordance with the laws of India. Any dispute arising out of or relating to these Terms or your use of the Service that cannot be resolved informally shall be subject to the exclusive jurisdiction of the competent courts in India. We encourage you to contact us first at <a class="underline underline-offset-4 hover:text-primary" href="mailto:info@catalogapp.in">info@catalogapp.in</a> so we can try to resolve any issue directly.
+              </p>
+            </div>
+
+            <div id="changes" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">11. Changes to These Terms</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                We may update these Terms from time to time. When we do, we will revise the "Last updated" date at the top of this page. If the changes are material, we will make reasonable efforts to notify you — for example, via email or a prominent notice in the Service. Your continued use of Catalog after the effective date of revised Terms constitutes your acceptance of those changes. If you do not agree to the updated Terms, you must stop using the Service.
+              </p>
+            </div>
+
+            <div id="contact" class="bg-surface-container-lowest rounded-xl editorial-shadow border border-on-surface/5 p-8 md:p-10">
+              <div class="font-label font-bold uppercase tracking-widest text-xs text-primary mb-4">12. Contact Us</div>
+              <p class="font-body text-sm opacity-80 leading-relaxed">
+                If you have any questions about these Terms, please reach out to us at <a class="underline underline-offset-4 hover:text-primary" href="mailto:info@catalogapp.in">info@catalogapp.in</a>. We aim to respond to all enquiries within 5 business days.
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="terms.html">Terms of Service</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="#">Instagram</a>
+      </div>
+      <div class="mt-8 flex gap-6">
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="restaurant">restaurant</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="public">public</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="favorite">favorite</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./static-page.js"></script>
+  </body>
+</html>
+

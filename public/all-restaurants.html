@@ -1,0 +1,283 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>All Restaurants — Catalog</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .editorial-shadow { box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06); }
+      .glass-nav { backdrop-filter: blur(16px); background-color: rgba(254, 249, 241, 0.8); }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <!-- NAV -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8 md:gap-12">
+      <a class="text-3xl font-headline italic text-[#1d1b17] dark:text-[#fef9f1] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="material-symbols-outlined text-on-surface hover:scale-95 transition-transform" data-icon="account_circle" id="navAccountBtn" type="button">account_circle</button>
+      <button class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" id="navHamburger" aria-label="Open menu" type="button">
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine1"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine2"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine3"></span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="hidden md:hidden glass-nav border-t border-on-surface/10">
+    <div class="flex flex-col px-6 py-4 gap-5">
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false,skip=false;
+    if(!btn)return;
+    function closeMenu(){open=false;menu.classList.add("hidden");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
+    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("hidden",!open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
+    document.addEventListener("click",function(e){if(skip)return;if(open&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){closeMenu();}});
+  })();
+</script>
+
+    <main class="pt-24 md:pt-32 pb-16 md:pb-24">
+
+      <!-- Hero header -->
+      <div class="max-w-screen-2xl mx-auto px-6 md:px-12 mb-10 md:mb-14">
+        <header class="mb-8 md:mb-12">
+          <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
+            <div>
+              <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-2">DISCOVER</span>
+              <h1 class="font-headline italic text-5xl md:text-7xl lg:text-8xl text-on-surface tracking-tighter leading-none">
+                All Restaurants
+              </h1>
+            </div>
+
+            <!-- Search -->
+            <div class="relative w-full md:w-[420px]">
+              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+              <input
+                class="w-full bg-surface-container-lowest border-none rounded-full py-3 pl-12 pr-14 text-sm font-label focus:ring-1 focus:ring-primary-container outline-none transition-all editorial-shadow"
+                id="allSearchInput"
+                placeholder="Search restaurants, cuisine, area…"
+                type="search"
+              />
+              <button
+                aria-label="Search"
+                class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary p-2 rounded-full flex items-center justify-center text-white"
+                id="allSearchBtn"
+                type="button"
+              >
+                <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Filter bar -->
+        <div class="flex flex-wrap items-center gap-3">
+
+          <!-- Mobile: toggle button (hidden on md+) -->
+          <button type="button" id="filtersToggleBtn"
+            class="md:hidden flex items-center gap-2 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 hover:bg-surface-container-low transition-colors">
+            <span class="material-symbols-outlined text-[16px] text-on-surface-variant">tune</span>
+            <span class="font-label text-sm" id="filtersToggleLabel">Filters</span>
+          </button>
+
+          <!-- Filter controls: always visible on md+, toggled on mobile -->
+          <div id="filterControls" class="hidden md:flex items-center flex-wrap gap-3">
+
+            <!-- Cuisine custom dropdown -->
+            <div class="relative" id="cuisineDropdownWrap">
+              <button type="button" id="cuisineDropdownBtn"
+                class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
+                <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Cuisine</span>
+                <span class="font-label text-sm" id="cuisineDropdownLabel">All cuisines</span>
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="cuisineDropdownChevron">expand_more</span>
+              </button>
+              <div id="cuisineDropdownPanel"
+                class="hidden fixed z-50 min-w-[200px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2 max-h-72 overflow-y-auto">
+              </div>
+            </div>
+
+            <!-- Sort custom dropdown -->
+            <div class="relative" id="sortDropdownWrap">
+              <button type="button" id="sortDropdownBtn"
+                class="flex items-center gap-2.5 bg-surface-container-lowest rounded-full editorial-shadow px-5 py-3 cursor-pointer hover:bg-surface-container-low transition-colors">
+                <span class="font-label uppercase tracking-widest text-[10px] opacity-50">Sort</span>
+                <span class="font-label text-sm" id="sortDropdownLabel">Name (A–Z)</span>
+                <span class="material-symbols-outlined text-[18px] text-on-surface-variant transition-transform duration-200" id="sortDropdownChevron">expand_more</span>
+              </button>
+              <div id="sortDropdownPanel"
+                class="hidden fixed z-50 min-w-[180px] bg-surface-container-lowest rounded-2xl editorial-shadow py-2">
+                <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="name">Name (A–Z)</button>
+                <button class="w-full text-left px-4 py-2.5 font-label text-sm hover:bg-surface-container-high transition-colors" data-sort="rating">Rating</button>
+              </div>
+            </div>
+
+            <button
+              class="bg-surface-container-high text-on-surface px-6 py-3 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors editorial-shadow"
+              id="clearFiltersBtn"
+              type="button"
+            >
+              Clear
+            </button>
+          </div>
+
+          <!-- Live count -->
+          <div class="ml-auto font-label text-xs uppercase tracking-widest opacity-50" id="allMeta"></div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="max-w-screen-2xl mx-auto px-6 md:px-12">
+        <div class="h-px w-full bg-on-surface/10 mb-10"></div>
+
+        <!-- Grid -->
+        <div
+          id="restaurantsGrid"
+          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-7"
+          aria-live="polite"
+        ></div>
+
+        <!-- Load more -->
+        <div class="flex justify-center mt-14">
+          <button
+            class="hidden bg-surface-container-lowest border border-on-surface/10 text-on-surface px-10 py-4 rounded-full font-label text-xs font-bold tracking-widest uppercase editorial-shadow hover:bg-surface-container-high transition-colors"
+            id="loadMoreBtn"
+            type="button"
+          >
+            Load more
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="terms.html">Terms of Service</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="#">Instagram</a>
+        
+      </div>
+      <div class="mt-8 flex gap-6">
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="restaurant">restaurant</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="public">public</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="favorite">favorite</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./all-restaurants.js"></script>
+  </body>
+</html>

@@ -3,8 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Profile — Catalog</title>
-
+    <title>Lists — Catalog</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
       href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
@@ -14,7 +13,6 @@
       href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
       rel="stylesheet"
     />
-
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -69,6 +67,12 @@
               "on-tertiary-container": "#c6b2a4",
               secondary: "#685c56",
             },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
             fontFamily: {
               headline: ["Newsreader", "serif"],
               body: ["Manrope", "sans-serif"],
@@ -76,23 +80,22 @@
               serif: ["Newsreader", "serif"],
               sans: ["Manrope", "sans-serif"],
             },
-            borderRadius: {
-              DEFAULT: "0.125rem",
-              lg: "0.25rem",
-              xl: "0.5rem",
-              full: "9999px",
-            },
           },
         },
       };
     </script>
-
     <style>
       .material-symbols-outlined {
         font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
       }
       .editorial-shadow {
         box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .stack-image-1 {
+        transform: rotate(-2deg) translateX(-4px);
+      }
+      .stack-image-2 {
+        transform: rotate(1deg) translateX(2px);
       }
       .glass-nav {
         backdrop-filter: blur(16px);
@@ -104,11 +107,10 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
-
     <link href="styles.css" rel="stylesheet" />
   </head>
-
   <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+    <!-- Top Navigation Bar -->
     <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
   <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
     <div class="flex items-center gap-8 md:gap-12">
@@ -152,182 +154,51 @@
 </script>
 
     <main class="pt-24 md:pt-32 pb-16 md:pb-24 max-w-screen-2xl mx-auto px-6 md:px-12">
-      <section class="bg-surface-container-low rounded-xl editorial-shadow p-6 md:p-10 lg:p-12 mb-10 md:mb-14">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          <div class="lg:col-span-7">
-            <p class="font-label uppercase tracking-widest text-xs text-primary mb-4">Profile</p>
-            <div class="flex items-start gap-6">
-              <div
-                class="w-20 h-20 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-2xl font-bold flex-none"
-                id="heroAvatar"
-              >
-                —
-              </div>
-              <div class="min-w-0 flex-1">
-                <h1 class="font-headline italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-none mb-1" id="heroName">
-                  Loading…
-                </h1>
-                <p class="font-label text-sm text-on-surface-variant/70 mb-3" id="heroUsername"></p>
-                <p class="font-body text-on-surface-variant leading-relaxed max-w-2xl" id="heroBio"></p>
-
-                <div class="mt-8 flex flex-wrap items-center gap-3" id="profileActions">
-                  <!-- buttons injected -->
-                </div>
-                <p class="font-label text-sm text-error hidden mt-4" id="profileHeroError"></p>
-              </div>
-            </div>
+      <!-- Page Header -->
+      <header class="mb-10 md:mb-16">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-8">
+          <div>
+            <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-2">CURATED COLLECTIONS</span>
+            <h1 class="font-headline italic text-5xl md:text-7xl lg:text-8xl text-on-surface tracking-tighter leading-none">Lists</h1>
           </div>
-
-          <div class="lg:col-span-5">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="flex items-baseline gap-4 mb-6">
-                <h2 class="font-headline text-3xl italic">Stats</h2>
-                <div class="h-px flex-grow bg-on-surface/10"></div>
-              </div>
-              <div class="grid grid-cols-3 gap-3 md:gap-6">
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statFriends">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">Friends</div>
-                </div>
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statTotal">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">Visits</div>
-                </div>
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statMonth">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">This month</div>
-                </div>
-              </div>
-              <p class="font-label text-sm opacity-60 mt-6 hidden" id="statsNote"></p>
+          <div class="flex flex-col sm:flex-row gap-3 md:gap-4 w-full md:w-auto">
+            <div class="relative w-full sm:w-80">
+              <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm" data-icon="search">search</span>
+              <input class="w-full bg-surface-container-lowest border-none rounded-full py-3 pl-12 pr-6 text-sm font-label focus:ring-1 focus:ring-primary-container outline-none transition-all editorial-shadow" id="listSearchInput" placeholder="Search curated lists..." type="text" />
             </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="bg-surface-container-low rounded-xl editorial-shadow p-6 md:p-10">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-          <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1" id="profileTabs">
-            <button
-              class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase transition-colors"
-              type="button"
-              data-tab="been"
-              id="tabBeen"
-            >
-              Been
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="saved"
-              id="tabSaved"
-            >
-              Saved
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="lists"
-              id="tabLists"
-            >
-              Lists
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="reviews"
-              id="tabReviews"
-            >
-              Reviews
+            <button class="w-full sm:w-auto bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-3 rounded-full font-label text-xs font-bold tracking-widest uppercase flex items-center justify-center gap-2 hover:opacity-90 active:scale-95 transition-all editorial-shadow" id="createListBtn" type="button">
+              <span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+              Create List
             </button>
           </div>
-
-          <div class="relative w-full md:w-96">
-            <span
-              class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"
-              data-icon="search"
-              >search</span
-            >
-            <input
-              class="w-full bg-surface-container-lowest border-none rounded-full py-3 pl-12 pr-6 text-sm font-label focus:ring-1 focus:ring-primary-container outline-none transition-all editorial-shadow"
-              id="profileSearchInput"
-              placeholder="Search within this profile..."
-              type="text"
-            />
-          </div>
         </div>
-
-        <!-- Panels -->
-        <div id="panelBeen" class="space-y-8">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-12" id="profileBeenGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="h-52 rounded-xl bg-surface-container-low"></div>
-              <div class="h-5 w-2/3 bg-surface-container-low rounded mt-6"></div>
-              <div class="h-4 w-1/2 bg-surface-container-low rounded mt-3"></div>
-            </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileBeenEmpty">No visits yet.</p>
+        <!-- Toggle Switch -->
+        <div class="mt-8 md:mt-12 flex items-center gap-8 border-b-2 border-surface-container-high pb-4" id="listsToggle">
+          <button class="font-label text-sm font-bold tracking-tight text-primary relative" data-view="discover" id="discoverTab" type="button">
+            Discover
+            <div class="absolute -bottom-[18px] left-0 right-0 h-0.5 bg-primary"></div>
+          </button>
+          <button class="font-label text-sm font-bold tracking-tight text-on-surface-variant opacity-60 hover:opacity-100 transition-opacity" data-view="mine" id="mineTab" type="button">
+            My Lists
+          </button>
         </div>
+      </header>
 
-        <div id="panelSaved" class="space-y-8 hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="profileSavedGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">
-              <div class="flex gap-6 items-start">
-                <div class="w-28 h-28 rounded-xl bg-surface-container-low flex-none"></div>
-                <div class="flex-1">
-                  <div class="h-5 w-2/3 bg-surface-container-low rounded"></div>
-                  <div class="h-4 w-1/2 bg-surface-container-low rounded mt-3"></div>
-                  <div class="h-8 w-40 bg-surface-container-low rounded-full mt-6"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileSavedEmpty">No saved places.</p>
-          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 hidden" id="profileSavedLocked">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="material-symbols-outlined text-primary">lock</span>
-              <p class="font-label uppercase tracking-widest text-xs text-primary">Private</p>
-            </div>
-            <p class="font-body text-on-surface-variant leading-relaxed">
-              Saved places are only visible to the account owner.
-            </p>
-          </div>
-        </div>
+      <!-- Bento Grid Feed -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-10 md:gap-y-16" id="listsGrid">
+        <!-- Filled by lists.js -->
+      </div>
 
-        <div id="panelLists" class="space-y-8 hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-10 md:gap-y-16" id="profileListsGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="h-5 w-2/3 rounded bg-surface-container-low"></div>
-              <div class="h-4 w-1/2 rounded bg-surface-container-low mt-3"></div>
-              <div class="h-28 rounded-xl bg-surface-container-low mt-6"></div>
-            </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileListsEmpty">No lists yet.</p>
-          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 hidden" id="profileListsLocked">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="material-symbols-outlined text-primary">visibility_off</span>
-              <p class="font-label uppercase tracking-widest text-xs text-primary">Not available</p>
-            </div>
-            <p class="font-body text-on-surface-variant leading-relaxed">
-              This page currently only shows lists for the account owner.
-            </p>
-          </div>
-        </div>
-
-        <div id="panelReviews" class="space-y-6 hidden">
-          <div class="space-y-6" id="profileReviewsList">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">
-              <div class="h-5 w-1/2 rounded bg-surface-container-low"></div>
-              <div class="h-4 w-2/3 rounded bg-surface-container-low mt-3"></div>
-              <div class="h-16 w-full rounded bg-surface-container-low mt-6"></div>
-            </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileReviewsEmpty">No reviews yet.</p>
-        </div>
-
-        <p class="font-label text-sm text-error hidden mt-10" id="profilePanelError"></p>
-      </section>
+      <!-- Pagination / Load More (kept for design; hidden by JS for now) -->
+      <div class="mt-24 flex justify-center" id="loadMoreWrap">
+        <button class="bg-surface-container-lowest text-on-surface px-10 py-4 rounded-full font-label text-[10px] font-bold tracking-widest uppercase editorial-shadow hover:bg-surface transition-colors flex items-center gap-3" id="loadMoreBtn" type="button">
+          Load more collections
+          <span class="material-symbols-outlined text-sm" data-icon="expand_more">expand_more</span>
+        </button>
+      </div>
     </main>
 
+    <!-- Footer -->
     <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
       <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
       <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
@@ -346,7 +217,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./profile.js"></script>
+    <script type="module" src="./lists.js"></script>
   </body>
 </html>
-

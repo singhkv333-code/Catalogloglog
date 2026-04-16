@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Profile — Catalog</title>
+    <title>Friends — Catalog</title>
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
@@ -152,179 +152,125 @@
 </script>
 
     <main class="pt-24 md:pt-32 pb-16 md:pb-24 max-w-screen-2xl mx-auto px-6 md:px-12">
-      <section class="bg-surface-container-low rounded-xl editorial-shadow p-6 md:p-10 lg:p-12 mb-10 md:mb-14">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          <div class="lg:col-span-7">
-            <p class="font-label uppercase tracking-widest text-xs text-primary mb-4">Profile</p>
-            <div class="flex items-start gap-6">
-              <div
-                class="w-20 h-20 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label text-2xl font-bold flex-none"
-                id="heroAvatar"
-              >
-                —
-              </div>
-              <div class="min-w-0 flex-1">
-                <h1 class="font-headline italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl tracking-tight leading-none mb-1" id="heroName">
-                  Loading…
-                </h1>
-                <p class="font-label text-sm text-on-surface-variant/70 mb-3" id="heroUsername"></p>
-                <p class="font-body text-on-surface-variant leading-relaxed max-w-2xl" id="heroBio"></p>
-
-                <div class="mt-8 flex flex-wrap items-center gap-3" id="profileActions">
-                  <!-- buttons injected -->
-                </div>
-                <p class="font-label text-sm text-error hidden mt-4" id="profileHeroError"></p>
-              </div>
-            </div>
+      <header class="mb-10 md:mb-16">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 lg:gap-10">
+          <div>
+            <span
+              class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-2"
+              >YOUR CIRCLE</span
+            >
+            <h1 class="font-headline italic text-5xl md:text-7xl lg:text-8xl text-on-surface tracking-tighter leading-none">
+              Friends
+            </h1>
           </div>
 
-          <div class="lg:col-span-5">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="flex items-baseline gap-4 mb-6">
-                <h2 class="font-headline text-3xl italic">Stats</h2>
-                <div class="h-px flex-grow bg-on-surface/10"></div>
-              </div>
-              <div class="grid grid-cols-3 gap-3 md:gap-6">
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statFriends">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">Friends</div>
-                </div>
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statTotal">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">Visits</div>
-                </div>
-                <div>
-                  <div class="font-headline italic text-4xl tabular-nums" id="statMonth">—</div>
-                  <div class="font-label text-[10px] uppercase tracking-widest opacity-60 mt-2">This month</div>
-                </div>
-              </div>
-              <p class="font-label text-sm opacity-60 mt-6 hidden" id="statsNote"></p>
+          <div class="w-full lg:max-w-xl">
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"
+                data-icon="search"
+                >search</span
+              >
+              <input
+                class="w-full bg-surface-container-lowest border-none rounded-full py-4 pl-12 pr-6 text-sm font-label focus:ring-1 focus:ring-primary-container outline-none transition-all editorial-shadow"
+                id="friendSearchInput"
+                placeholder="Search people by username..."
+                type="text"
+                autocomplete="off"
+              />
             </div>
+            <p class="font-label text-xs opacity-60 mt-3" id="searchHint">Type at least 2 characters.</p>
+          </div>
+        </div>
+      </header>
+
+      <!-- Discover People (search results) -->
+      <section class="mb-8 md:mb-12">
+        <div class="bg-surface-container-low rounded-xl editorial-shadow p-8">
+          <div class="flex items-baseline gap-4 mb-6">
+            <h2 class="font-headline text-3xl italic">Discover</h2>
+            <div class="h-px flex-grow bg-on-surface/10"></div>
+            <span class="font-label text-xs uppercase tracking-widest opacity-60" id="discoverCount">—</span>
+          </div>
+          <div class="space-y-3" id="discoverList">
+            <div class="font-label text-sm opacity-60">Type in the search bar above to find people.</div>
           </div>
         </div>
       </section>
 
-      <section class="bg-surface-container-low rounded-xl editorial-shadow p-6 md:p-10">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-10">
-          <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1" id="profileTabs">
-            <button
-              class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase transition-colors"
-              type="button"
-              data-tab="been"
-              id="tabBeen"
-            >
-              Been
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="saved"
-              id="tabSaved"
-            >
-              Saved
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="lists"
-              id="tabLists"
-            >
-              Lists
-            </button>
-            <button
-              class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
-              type="button"
-              data-tab="reviews"
-              id="tabReviews"
-            >
-              Reviews
-            </button>
-          </div>
-
-          <div class="relative w-full md:w-96">
-            <span
-              class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm"
-              data-icon="search"
-              >search</span
-            >
-            <input
-              class="w-full bg-surface-container-lowest border-none rounded-full py-3 pl-12 pr-6 text-sm font-label focus:ring-1 focus:ring-primary-container outline-none transition-all editorial-shadow"
-              id="profileSearchInput"
-              placeholder="Search within this profile..."
-              type="text"
-            />
-          </div>
-        </div>
-
-        <!-- Panels -->
-        <div id="panelBeen" class="space-y-8">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-10 gap-y-12" id="profileBeenGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="h-52 rounded-xl bg-surface-container-low"></div>
-              <div class="h-5 w-2/3 bg-surface-container-low rounded mt-6"></div>
-              <div class="h-4 w-1/2 bg-surface-container-low rounded mt-3"></div>
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
+        <!-- Left: People -->
+        <div class="lg:col-span-5 space-y-10">
+          <div class="bg-surface-container-low rounded-xl editorial-shadow p-8">
+            <div class="flex items-baseline gap-4 mb-6">
+              <h2 class="font-headline text-3xl italic">People</h2>
+              <div class="h-px flex-grow bg-on-surface/10"></div>
             </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileBeenEmpty">No visits yet.</p>
-        </div>
 
-        <div id="panelSaved" class="space-y-8 hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="profileSavedGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">
-              <div class="flex gap-6 items-start">
-                <div class="w-28 h-28 rounded-xl bg-surface-container-low flex-none"></div>
-                <div class="flex-1">
-                  <div class="h-5 w-2/3 bg-surface-container-low rounded"></div>
-                  <div class="h-4 w-1/2 bg-surface-container-low rounded mt-3"></div>
-                  <div class="h-8 w-40 bg-surface-container-low rounded-full mt-6"></div>
-                </div>
+            <div class="flex items-center gap-3 mb-6" id="peopleTabs">
+              <button
+                class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase transition-colors"
+                type="button"
+                data-tab="friends"
+                id="tabFriends"
+              >
+                Friends
+              </button>
+              <button
+                class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
+                type="button"
+                data-tab="requests"
+                id="tabRequests"
+              >
+                Requests
+                <span
+                  class="ml-2 inline-flex items-center justify-center min-w-6 h-6 rounded-full bg-primary-fixed text-on-surface text-[10px] font-bold px-2 hidden"
+                  id="requestsBadge"
+                  >0</span
+                >
+              </button>
+            </div>
+
+            <div class="space-y-3" id="peopleList">
+              <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow">
+                <div class="h-5 w-2/3 rounded bg-surface-container-low catalog-skeleton"></div>
+                <div class="h-4 w-1/2 rounded bg-surface-container-low mt-3 catalog-skeleton"></div>
               </div>
             </div>
+
+            <p class="font-label text-sm opacity-60 mt-6 hidden" id="peopleEmpty">Nothing here yet.</p>
+            <p class="font-label text-sm text-error mt-6 hidden" id="peopleError"></p>
           </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileSavedEmpty">No saved places.</p>
-          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 hidden" id="profileSavedLocked">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="material-symbols-outlined text-primary">lock</span>
-              <p class="font-label uppercase tracking-widest text-xs text-primary">Private</p>
-            </div>
-            <p class="font-body text-on-surface-variant leading-relaxed">
-              Saved places are only visible to the account owner.
-            </p>
-          </div>
+
         </div>
 
-        <div id="panelLists" class="space-y-8 hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 md:gap-x-12 gap-y-10 md:gap-y-16" id="profileListsGrid">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8">
-              <div class="h-5 w-2/3 rounded bg-surface-container-low"></div>
-              <div class="h-4 w-1/2 rounded bg-surface-container-low mt-3"></div>
-              <div class="h-28 rounded-xl bg-surface-container-low mt-6"></div>
+        <!-- Right: Activity -->
+        <div class="lg:col-span-7">
+          <div class="bg-surface-container-low rounded-xl editorial-shadow p-8">
+            <div class="flex items-baseline gap-4 mb-6">
+              <h2 class="font-headline text-3xl italic">Friend activity</h2>
+              <div class="h-px flex-grow bg-on-surface/10"></div>
+              <button
+                class="bg-surface-container-high text-on-surface px-6 py-2.5 rounded-full font-label text-[10px] font-bold tracking-widest uppercase hover:bg-surface-container-highest transition-colors"
+                type="button"
+                id="refreshActivityBtn"
+              >
+                Refresh
+              </button>
             </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileListsEmpty">No lists yet.</p>
-          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 hidden" id="profileListsLocked">
-            <div class="flex items-center gap-3 mb-3">
-              <span class="material-symbols-outlined text-primary">visibility_off</span>
-              <p class="font-label uppercase tracking-widest text-xs text-primary">Not available</p>
+
+            <div class="space-y-6" id="activityList">
+              <div class="bg-surface-container-lowest rounded-xl p-6 editorial-shadow">
+                <div class="h-5 w-1/2 rounded bg-surface-container-low catalog-skeleton"></div>
+                <div class="h-4 w-2/3 rounded bg-surface-container-low mt-3 catalog-skeleton"></div>
+                <div class="h-20 w-full rounded bg-surface-container-low mt-6 catalog-skeleton"></div>
+              </div>
             </div>
-            <p class="font-body text-on-surface-variant leading-relaxed">
-              This page currently only shows lists for the account owner.
-            </p>
+
+            <p class="font-label text-sm opacity-60 mt-6 hidden" id="activityEmpty">No activity yet.</p>
+            <p class="font-label text-sm text-error mt-6 hidden" id="activityError"></p>
           </div>
         </div>
-
-        <div id="panelReviews" class="space-y-6 hidden">
-          <div class="space-y-6" id="profileReviewsList">
-            <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">
-              <div class="h-5 w-1/2 rounded bg-surface-container-low"></div>
-              <div class="h-4 w-2/3 rounded bg-surface-container-low mt-3"></div>
-              <div class="h-16 w-full rounded bg-surface-container-low mt-6"></div>
-            </div>
-          </div>
-          <p class="font-label text-sm opacity-60 hidden" id="profileReviewsEmpty">No reviews yet.</p>
-        </div>
-
-        <p class="font-label text-sm text-error hidden mt-10" id="profilePanelError"></p>
       </section>
     </main>
 
@@ -346,7 +292,6 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script type="module" src="./profile.js"></script>
+    <script type="module" src="./friends.js"></script>
   </body>
 </html>
-

@@ -1,0 +1,422 @@
+<!doctype html>
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Support — Catalog</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed": "#241911",
+              "inverse-primary": "#ffb3ac",
+              "surface-container-high": "#ece7e1",
+              tertiary: "#3b2e25",
+              "on-surface-variant": "#58413f",
+              "surface-container-highest": "#e7e2db",
+              "secondary-container": "#f0dfd8",
+              "outline-variant": "#e0bfbc",
+              "on-error-container": "#93000a",
+              "on-primary-fixed-variant": "#8a1a1a",
+              "tertiary-fixed-dim": "#d7c3b5",
+              "tertiary-container": "#52443a",
+              background: "#fef9f1",
+              "surface-dim": "#ded9d3",
+              "surface-container-low": "#f8f3ec",
+              "primary-fixed": "#ffdad6",
+              "primary-fixed-dim": "#ffb3ac",
+              outline: "#8c716e",
+              "on-background": "#1d1b17",
+              "on-tertiary-fixed-variant": "#52443a",
+              "tertiary-fixed": "#f4ded0",
+              "error-container": "#ffdad6",
+              "surface-container": "#f2ede6",
+              "on-primary": "#ffffff",
+              "on-secondary-container": "#6e625c",
+              "on-secondary-fixed-variant": "#4f453f",
+              "surface-container-lowest": "#ffffff",
+              surface: "#fef9f1",
+              "on-secondary-fixed": "#221a16",
+              "on-surface": "#1d1b17",
+              "primary-container": "#8b1a1a",
+              error: "#ba1a1a",
+              "inverse-on-surface": "#f5f0e9",
+              "surface-variant": "#e7e2db",
+              primary: "#690008",
+              "on-primary-fixed": "#410003",
+              "on-secondary": "#ffffff",
+              "on-error": "#ffffff",
+              "inverse-surface": "#32302c",
+              "secondary-fixed": "#f0dfd8",
+              "secondary-fixed-dim": "#d3c3bc",
+              "on-primary-container": "#ff9a91",
+              "surface-tint": "#ac322e",
+              "on-tertiary": "#ffffff",
+              "surface-bright": "#fef9f1",
+              "on-tertiary-container": "#c6b2a4",
+              secondary: "#685c56",
+            },
+            fontFamily: {
+              headline: ["Newsreader", "serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Manrope", "sans-serif"],
+              serif: ["Newsreader", "serif"],
+              sans: ["Manrope", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.125rem",
+              lg: "0.25rem",
+              xl: "0.5rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      #mobileMenu { max-height: 0; overflow: hidden; transition: max-height 350ms ease; }
+      #mobileMenu.open { max-height: 400px; }
+      .material-symbols-outlined {
+        font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      }
+      .editorial-shadow {
+        box-shadow: 0 12px 40px rgba(29, 27, 23, 0.06);
+      }
+      .glass-nav {
+        backdrop-filter: blur(16px);
+        background-color: rgba(254, 249, 241, 0.8);
+      }
+      .type-btn {
+        border: 1.5px solid rgba(29, 27, 23, 0.15);
+        background: transparent;
+        color: #1d1b17;
+        transition: border-color 0.15s, background 0.15s, color 0.15s;
+      }
+      .type-btn:hover {
+        border-color: rgba(105, 0, 8, 0.35);
+      }
+      .type-btn.selected {
+        border-color: #690008;
+        background: rgba(105, 0, 8, 0.06);
+        color: #690008;
+      }
+      .type-btn .btn-icon {
+        color: #58413f;
+        transition: color 0.15s;
+      }
+      .type-btn.selected .btn-icon {
+        color: #690008;
+      }
+    </style>
+
+    <link href="styles.css" rel="stylesheet" />
+  </head>
+
+  <body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+
+    <!-- Nav -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div class="flex justify-between items-center w-full px-6 md:px-12 py-5 md:py-8 max-w-screen-2xl mx-auto">
+    <div class="flex items-center gap-8 md:gap-12">
+      <a class="text-3xl font-headline italic text-[#1d1b17] dark:text-[#fef9f1] tracking-tighter cursor-pointer" href="newindex.html" style="text-decoration:none">Catalog</a>
+      <div class="hidden md:flex items-center gap-8">
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+        <a class="text-[#1d1b17] opacity-70 hover:opacity-100 hover:text-[#8b1a1a] transition-all duration-300 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="material-symbols-outlined text-on-surface hover:scale-95 transition-transform" data-icon="account_circle" id="navAccountBtn" type="button">account_circle</button>
+      <button class="md:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5" id="navHamburger" aria-label="Open menu" type="button">
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine1"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine2"></span>
+        <span class="block w-5 h-0.5 bg-on-surface transition-all" id="hbLine3"></span>
+      </button>
+    </div>
+  </div>
+  <!-- Mobile dropdown -->
+  <div id="mobileMenu" class="md:hidden glass-nav border-t border-on-surface/10">
+    <div class="flex flex-col px-6 py-4 gap-5">
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="lists.html">LISTS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="been.html">BEEN</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="saved.html">SAVED</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="friends.html">FRIENDS</a>
+      <a class="text-[#1d1b17] opacity-70 hover:opacity-100 font-sans uppercase tracking-widest text-xs" href="blog.html">BLOG</a>
+    </div>
+  </div>
+</nav>
+<script>
+  (function(){
+    var btn=document.getElementById("navHamburger"),menu=document.getElementById("mobileMenu"),l1=document.getElementById("hbLine1"),l2=document.getElementById("hbLine2"),l3=document.getElementById("hbLine3"),open=false,skip=false;
+    if(!btn)return;
+    function closeMenu(){open=false;menu.classList.remove("open");l1.style.transform="";l2.style.opacity="1";l3.style.transform="";}
+    btn.addEventListener("click",function(){skip=true;open=!open;menu.classList.toggle("open",open);l1.style.transform=open?"translateY(8px) rotate(45deg)":"";l2.style.opacity=open?"0":"1";l3.style.transform=open?"translateY(-8px) rotate(-45deg)":"";setTimeout(function(){skip=false;},0);});
+    document.addEventListener("click",function(e){if(skip)return;if(open&&!menu.contains(e.target)&&e.target!==btn&&!btn.contains(e.target)){closeMenu();}});
+  })();
+</script>
+
+    <main class="pt-24 md:pt-32 pb-16 md:pb-24 max-w-screen-2xl mx-auto px-6 md:px-12">
+
+      <!-- Header -->
+      <header class="mb-10 md:mb-16">
+        <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6 lg:gap-10">
+          <div>
+            <span class="font-label uppercase tracking-[0.2em] text-[0.65rem] text-primary font-bold block mb-2">Help & feedback</span>
+            <h1 class="font-headline italic text-5xl md:text-7xl lg:text-8xl text-on-surface tracking-tighter leading-none">Support</h1>
+          </div>
+          <p class="font-body text-base text-on-surface-variant max-w-sm leading-relaxed">
+            We read every message. Whether it's a bug, an idea, or a restaurant you think belongs on Catalog — let us know.
+          </p>
+        </div>
+        <div class="h-px w-full bg-on-surface/10 mt-12"></div>
+      </header>
+
+      <!-- Contact card -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        <div class="lg:col-span-1">
+          <div class="bg-surface-container-low rounded-xl editorial-shadow p-8 h-full flex flex-col justify-between">
+            <div>
+              <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-primary">mail</span>
+              </div>
+              <div class="font-label text-xs uppercase tracking-widest font-bold text-primary mb-3">Email us</div>
+              <p class="font-body text-sm text-on-surface-variant leading-relaxed">
+                Bugs, feature ideas, restaurant additions, general feedback — everything goes to the same place and we'll get back to you.
+              </p>
+            </div>
+            <a
+              href="mailto:info@catalogapp.in"
+              class="mt-8 inline-flex items-center gap-2 font-label text-sm font-bold text-primary hover:opacity-70 transition-opacity"
+            >
+              info@catalogapp.in
+              <span class="material-symbols-outlined text-sm">arrow_outward</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Feedback form -->
+        <div class="lg:col-span-2">
+          <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-8 border border-on-surface/5">
+            <div class="font-label text-xs uppercase tracking-widest font-bold text-primary mb-2">Send a message</div>
+            <h2 class="font-headline italic text-3xl text-on-surface tracking-tight mb-8">Tell us what's on your mind.</h2>
+
+            <form id="supportForm" class="space-y-5" novalidate>
+
+              <!-- Type selector -->
+              <div>
+                <label class="block font-label text-sm font-bold mb-3">What is this about?</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="typeSelector">
+                  <button type="button" data-type="bug"
+                    class="type-btn border border-on-surface/15 rounded-xl py-3 px-4 text-left transition-all hover:border-primary/40"
+                  >
+                    <span class="material-symbols-outlined btn-icon text-base block mb-1">bug_report</span>
+                    <span class="font-label text-xs font-bold block">Bug report</span>
+                  </button>
+                  <button type="button" data-type="feature"
+                    class="type-btn border border-on-surface/15 rounded-xl py-3 px-4 text-left transition-all hover:border-primary/40"
+                  >
+                    <span class="material-symbols-outlined btn-icon text-base block mb-1">auto_awesome</span>
+                    <span class="font-label text-xs font-bold block">Feature idea</span>
+                  </button>
+                  <button type="button" data-type="restaurant"
+                    class="type-btn border border-on-surface/15 rounded-xl py-3 px-4 text-left transition-all hover:border-primary/40"
+                  >
+                    <span class="material-symbols-outlined btn-icon text-base block mb-1">add_location</span>
+                    <span class="font-label text-xs font-bold block">Add restaurant</span>
+                  </button>
+                  <button type="button" data-type="other"
+                    class="type-btn border border-on-surface/15 rounded-xl py-3 px-4 text-left transition-all hover:border-primary/40"
+                  >
+                    <span class="material-symbols-outlined btn-icon text-base block mb-1">chat</span>
+                    <span class="font-label text-xs font-bold block">Other</span>
+                  </button>
+                </div>
+                <input type="hidden" id="selectedType" value="" />
+              </div>
+
+              <!-- Name + email row -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-label text-sm font-bold mb-2" for="supportName">Your name</label>
+                  <input
+                    id="supportName"
+                    type="text"
+                    placeholder="e.g. Alex"
+                    class="w-full bg-surface-container-low border-none rounded-full py-4 px-5 text-sm font-body focus:ring-2 focus:ring-primary-container outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label class="block font-label text-sm font-bold mb-2" for="supportEmail">Your email</label>
+                  <input
+                    id="supportEmail"
+                    type="email"
+                    placeholder="you@example.com"
+                    class="w-full bg-surface-container-low border-none rounded-full py-4 px-5 text-sm font-body focus:ring-2 focus:ring-primary-container outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <!-- Restaurant name — only shown when type = restaurant -->
+              <div id="restaurantField" class="hidden">
+                <label class="block font-label text-sm font-bold mb-2" for="restaurantName">Restaurant name & location</label>
+                <input
+                  id="restaurantName"
+                  type="text"
+                  placeholder="e.g. Sarvana Bhavan, Chennai"
+                  class="w-full bg-surface-container-low border-none rounded-full py-4 px-5 text-sm font-body focus:ring-2 focus:ring-primary-container outline-none transition-all"
+                />
+                <p class="font-label text-xs text-on-surface-variant opacity-60 mt-2 pl-2">
+                  Include the city or neighbourhood so we can find it.
+                </p>
+              </div>
+
+              <!-- Message -->
+              <div>
+                <label class="block font-label text-sm font-bold mb-2" for="supportMessage" id="messageLabel">Message</label>
+                <textarea
+                  id="supportMessage"
+                  rows="5"
+                  placeholder="Describe the issue, idea, or anything else…"
+                  class="w-full bg-surface-container-low border-none rounded-xl py-4 px-5 text-sm font-body focus:ring-2 focus:ring-primary-container outline-none transition-all resize-none"
+                ></textarea>
+              </div>
+
+              <!-- Error / success -->
+              <p class="font-label text-sm text-error hidden" id="formError"></p>
+              <p class="font-label text-sm text-primary hidden" id="formSuccess">
+                Thanks — we'll be in touch soon.
+              </p>
+
+              <div class="flex items-center justify-between gap-4 pt-2 flex-wrap">
+                <p class="font-label text-xs text-on-surface-variant opacity-60">
+                  Or email us directly at
+                  <a href="mailto:info@catalogapp.in" class="underline underline-offset-2 hover:text-primary transition-colors">info@catalogapp.in</a>
+                </p>
+                <button
+                  type="submit"
+                  id="submitBtn"
+                  class="bg-gradient-to-br from-primary to-primary-container text-on-primary px-8 py-3 rounded-full font-label text-xs font-bold tracking-widest uppercase hover:opacity-90 active:scale-95 transition-all editorial-shadow flex items-center gap-2"
+                >
+                  Send message
+                  <span class="material-symbols-outlined text-sm">send</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-[#1c1410] dark:bg-[#000000] w-full px-6 md:px-12 py-12 md:py-16 flex flex-col items-center gap-6 text-center">
+      <span class="text-2xl font-headline italic text-[#fef9f1]">Catalog</span>
+      <p class="font-sans text-sm text-[#e7e2db] opacity-60">&copy; 2026 Catalog.<br>Food social network for explorers.</p>
+      <div class="flex flex-col sm:flex-row gap-4 sm:gap-8 mt-4 items-center">
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="about.html">About</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="support.html">Support</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="terms.html">Terms of Service</a>
+        <a class="font-sans text-sm text-[#e7e2db] opacity-60 hover:opacity-100 hover:text-[#fef9f1] transition-all" href="#">Instagram</a>
+        
+      </div>
+      <div class="mt-8 flex gap-6">
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="restaurant">restaurant</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="public">public</span>
+        <span class="material-symbols-outlined text-[#fef9f1]/40" data-icon="favorite">favorite</span>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script type="module" src="./static-page.js"></script>
+
+    <script>
+      // Type selector interaction
+      const typeBtns = document.querySelectorAll('.type-btn');
+      const selectedTypeInput = document.getElementById('selectedType');
+      const restaurantField = document.getElementById('restaurantField');
+
+      const placeholders = {
+        bug: 'Describe what happened and how to reproduce it…',
+        feature: "Describe the feature you'd like to see and why it would help…",
+        restaurant: 'Any extra details — cuisine type, why you love it, etc…',
+        other: 'Describe the issue, idea, or anything else…',
+      };
+
+      typeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          typeBtns.forEach((b) => b.classList.remove('selected'));
+          btn.classList.add('selected');
+
+          const type = btn.dataset.type;
+          selectedTypeInput.value = type;
+
+          restaurantField.classList.toggle('hidden', type !== 'restaurant');
+
+          const msgArea = document.getElementById('supportMessage');
+          if (msgArea) msgArea.placeholder = placeholders[type] || placeholders.other;
+        });
+      });
+
+      // Form submit — composes a mailto with the form data
+      document.getElementById('supportForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const type = selectedTypeInput.value;
+        const name = document.getElementById('supportName').value.trim();
+        const email = document.getElementById('supportEmail').value.trim();
+        const restaurant = document.getElementById('restaurantName').value.trim();
+        const message = document.getElementById('supportMessage').value.trim();
+        const errorEl = document.getElementById('formError');
+        const successEl = document.getElementById('formSuccess');
+
+        errorEl.classList.add('hidden');
+        successEl.classList.add('hidden');
+
+        if (!type) {
+          errorEl.textContent = 'Please select a topic above.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        if (!email) {
+          errorEl.textContent = 'Please enter your email so we can reply.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        if (!message) {
+          errorEl.textContent = 'Please write a message before sending.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const typeLabels = { bug: 'Bug report', feature: 'Feature idea', restaurant: 'Add a restaurant', other: 'General' };
+        const subject = `[${typeLabels[type] || 'Support'}] ${name ? `from ${name}` : email}`;
+
+        let body = `Type: ${typeLabels[type] || type}\n`;
+        if (name) body += `Name: ${name}\n`;
+        body += `Email: ${email}\n`;
+        if (type === 'restaurant' && restaurant) body += `Restaurant: ${restaurant}\n`;
+        body += `\nMessage:\n${message}`;
+
+        window.location.href = `mailto:info@catalogapp.in?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        successEl.classList.remove('hidden');
+      });
+    </script>
+  </body>
+</html>
