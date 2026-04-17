@@ -5,6 +5,12 @@
 import { requireAuth, getToken, logout } from './auth.js';
 import { FASTAPI_BASE, EXPRESS_BASE } from './config.js';
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -141,7 +147,7 @@ function formatWhen(value) {
 function renderRestaurantTile(v, { showWhen = false } = {}) {
   const slug = v?.slug || v?.restaurant_id || '';
   const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
-  const imgUrl = v?.image_url || v?.images?.[0] || '';
+  const imgUrl = cloudinaryResize(v?.image_url || v?.images?.[0] || '', 400);
   const when = showWhen ? formatWhen(v?.visited_at || v?.added_at) : '';
   return `
     <a class="group block" href="${escapeHtml(href)}">
@@ -168,7 +174,7 @@ function renderRestaurantTile(v, { showWhen = false } = {}) {
 function renderSavedRow(b) {
   const slug = b?.slug || b?.restaurant_id || '';
   const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
-  const imgUrl = b?.image_url || b?.images?.[0] || '';
+  const imgUrl = cloudinaryResize(b?.image_url || b?.images?.[0] || '', 400);
   const when = formatWhen(b?.added_at);
   return `
     <a class="bg-surface-container-lowest rounded-xl editorial-shadow p-7 block group" href="${escapeHtml(href)}">

@@ -23,6 +23,7 @@ function resolveSslOption() {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: resolveSslOption(),
+  max: 3,
 })
 
 module.exports = pool

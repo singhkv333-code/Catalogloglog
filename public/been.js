@@ -4,6 +4,12 @@
 import { requireAuth, getToken, logout } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -121,7 +127,7 @@ function renderCard(v) {
   // nameSlug is for page navigation only — computed from name or from the slug field the server returns
   const nameSlug = v?.slug || (v?.name ? v.name.toLowerCase().replace(/\s+/g, '-') : storedId);
   const href = nameSlug ? `restaurant?slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
-  const imgUrl = v?.image_url || v?.images?.[0] || '';
+  const imgUrl = cloudinaryResize(v?.image_url || v?.images?.[0] || '', 400);
   const rating = Number(v?.user_rating ?? 0) || 0;
   const when = formatWhen(v?.visited_at);
   const starCount = Math.max(0, Math.min(5, Math.round(rating)));

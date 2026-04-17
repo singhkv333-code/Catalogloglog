@@ -23,7 +23,13 @@ app.use(express.json())
 pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT`).catch(() => {})
 
 // ================== SUPABASE JWT RESOLVER ==================
+const crypto = require('crypto')
+
 async function resolveSupabaseUser(token) {
+  const cacheKey = `supauser:${crypto.createHash('sha256').update(token).digest('hex').slice(0, 32)}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return cached
+
   const resp = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_ANON_KEY },
   })
@@ -44,7 +50,9 @@ async function resolveSupabaseUser(token) {
       [email, username, name]
     )
   }
-  return row.rows[0]
+  const user = row.rows[0]
+  if (user) await cacheSet(cacheKey, user, 5 * 60)
+  return user
 }
 
 // ================== AUTH MIDDLEWARE ==================
@@ -86,6 +94,112 @@ app.get('/api/me', authMiddleware, async (req, res) => {
   } catch {
     res.json({ id: req.user.id, email: req.user.email, username: req.user.username, bio: null })
   }
+})
+
+// ================== KEEPALIVE ==================
+app.get('/api/ping', async (_req, res) => {
+  try { await pool.query('SELECT 1'); res.json({ ok: true }) }
+  catch (err) { res.status(500).json({ ok: false, error: err.message }) }
+})
+
+// ================== HOME DATA ==================
+// Single endpoint that replaces 4 separate homepage API calls.
+// Public parts (popular + lists) are cached at 5 min to stay within Upstash free-tier limits.
+app.get('/api/home-data', optionalAuth, async (req, res) => {
+  const uid = req.user ? req.user.id : null
+  const publicCacheKey = `home:public`
+  const cachedPublic = await cacheGet(publicCacheKey)
+
+  let popular, lists
+  if (cachedPublic) {
+    popular = cachedPublic.popular
+    lists = cachedPublic.lists
+  } else {
+    const [popularResult, listsResult] = await Promise.all([
+      pool.query(
+        `SELECT r.id, r.name, r.area, r.cuisine, r.image_url,
+                LOWER(REPLACE(r.name,' ','-')) AS slug,
+                COALESCE(s.average_rating,0) AS avg_rating,
+                COALESCE(s.total_ratings,0)  AS total_ratings
+         FROM restaurants r
+         LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = r.id::text
+         WHERE r.name IS NOT NULL AND r.image_url IS NOT NULL AND r.image_url != ''
+         ORDER BY s.total_ratings DESC NULLS LAST, s.average_rating DESC NULLS LAST, RANDOM()
+         LIMIT 12`
+      ),
+      pool.query(
+        `SELECT l.id, l.title, l.description, l.user_id, u.username AS owner_username,
+                COUNT(DISTINCT li.id) AS item_count,
+                COALESCE(COUNT(DISTINCT ll.id),0) AS likes_count
+         FROM lists l JOIN users u ON l.user_id=u.id
+         LEFT JOIN list_items li ON li.list_id=l.id
+         LEFT JOIN list_likes ll ON ll.list_id=l.id
+         WHERE l.is_public=true
+         GROUP BY l.id, l.title, l.description, l.user_id, u.username
+         ORDER BY likes_count DESC, item_count DESC, MAX(l.created_at) DESC
+         LIMIT 10`
+      )
+    ])
+    popular = popularResult.rows
+    const listsWithPreviews = await Promise.all(listsResult.rows.map(async lst => {
+      const prev = await pool.query(
+        `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
+         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
+         WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
+        [lst.id]
+      )
+      return {
+        id: lst.id, title: lst.title, description: lst.description,
+        owner_id: lst.user_id, owner_username: lst.owner_username,
+        item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
+        liked_by_user: false, preview_restaurants: prev.rows
+      }
+    }))
+    lists = listsWithPreviews
+    await cacheSet(publicCacheKey, { popular, lists }, 5 * 60)
+  }
+
+  let activity = [], recent = [], user = null
+  if (uid) {
+    const [activityResult, recentResult, userResult] = await Promise.all([
+      pool.query(
+        `SELECT v.id AS visit_id, v.restaurant_id, v.visited_at,
+                u.id AS friend_id, u.username AS friend_username, u.name AS friend_name,
+                rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine AS restaurant_cuisine, rs.image_url,
+                LOWER(REPLACE(rs.name,' ','-')) AS slug,
+                rat.stars, rev.content AS review_snippet
+         FROM visits v JOIN users u ON v.user_id=u.id
+         LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
+         LEFT JOIN ratings rat ON rat.user_id=v.user_id AND rat.restaurant_id=v.restaurant_id
+         LEFT JOIN reviews rev ON rev.user_id=v.user_id AND rev.restaurant_id=v.restaurant_id
+         WHERE v.user_id IN (
+           SELECT CASE WHEN requester_id=$1 THEN addressee_id ELSE requester_id END
+           FROM friendships WHERE (requester_id=$1 OR addressee_id=$1) AND status='accepted'
+         )
+         ORDER BY v.visited_at DESC LIMIT 3`,
+        [uid]
+      ),
+      pool.query(
+        `SELECT v.restaurant_id, LOWER(REPLACE(rs.name,' ','-')) AS slug,
+                rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
+                COALESCE(rat.stars, 0) AS user_rating
+         FROM visits v
+         LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
+         LEFT JOIN ratings rat ON rat.restaurant_id=v.restaurant_id AND rat.user_id=$1
+         WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT 8`,
+        [uid]
+      ),
+      pool.query('SELECT id, email, username, name, bio FROM users WHERE id=$1', [uid])
+    ])
+    activity = activityResult.rows.map(a => ({
+      ...a, review_snippet: a.review_snippet && a.review_snippet.length > 120
+        ? a.review_snippet.slice(0, 120) + '…' : a.review_snippet
+    }))
+    recent = recentResult.rows
+    user = userResult.rows[0] || null
+  }
+
+  res.json({ popular, lists, activity, recent, user })
 })
 
 // ================== SIGNUP ==================

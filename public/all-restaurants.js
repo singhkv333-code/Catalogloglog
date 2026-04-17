@@ -4,6 +4,12 @@
 import { FASTAPI_BASE } from './config.js';
 import { getToken, fetchCurrentUser, logout } from './auth.js';
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -144,7 +150,7 @@ function restaurantCardHtml(r, rating) {
     : null;
 
   const imagePart = r.image_url
-    ? `<img alt="${escapeHtml(r.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${escapeHtml(r.image_url)}" loading="lazy" />`
+    ? `<img alt="${escapeHtml(r.name)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="${escapeHtml(cloudinaryResize(r.image_url, 400))}" loading="lazy" />`
     : `<div class="w-full h-full flex items-center justify-center font-headline italic text-6xl text-on-surface/20">${escapeHtml((r.name || 'R')[0]?.toUpperCase?.() || 'R')}</div>`;
 
   return `

@@ -8,6 +8,12 @@ import { startProgress, finishProgress } from './progress.js';
 // Used by `restaurant?` to detect whether the module script loaded at all.
 window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = true;
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -958,7 +964,7 @@ async function init() {
 
   const img = document.getElementById('restaurantHeroImg');
   const imgWrap = document.getElementById('restaurantHeroImgWrap');
-  const heroUrl = restaurant?.images?.[0] || restaurant?.image_url || '';
+  const heroUrl = cloudinaryResize(restaurant?.images?.[0] || restaurant?.image_url || '', 800);
   if (img && heroUrl) {
     img.src = heroUrl;
     img.alt = restaurant?.name || '';
@@ -998,7 +1004,7 @@ async function init() {
           'group relative aspect-[4/3] rounded-xl overflow-hidden bg-surface-container-low focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-container';
         btn.innerHTML = `
           <img class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" src="${escapeHtml(
-            url
+            cloudinaryResize(url, 600)
           )}" alt="${escapeHtml(restaurant?.name || 'Restaurant')}" loading="lazy" />
         `.trim();
         btn.addEventListener('click', () => openPhotoLightbox({ src: url, alt: restaurant?.name || '' }));

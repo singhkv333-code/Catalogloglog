@@ -120,9 +120,13 @@ function formatRating(r) {
   return value.toFixed(1);
 }
 
-function safeImgSrc(url) {
+function safeImgSrc(url, width = 400) {
   const str = String(url || '').trim();
-  return str || null;
+  if (!str) return null;
+  if (str.includes('res.cloudinary.com') && str.includes('/image/upload/')) {
+    return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+  }
+  return str;
 }
 
 async function fetchJson(url, { headers } = {}) {
@@ -183,7 +187,7 @@ function hydratePopularCardFeature(cardEl, restaurant) {
     window.location.href = clickUrl;
   };
 
-  const src = safeImgSrc(restaurant.image_url);
+  const src = safeImgSrc(restaurant.image_url, 800);
   if (img) {
     if (src) {
       img.src = src;
@@ -495,11 +499,11 @@ async function loadPublicLists({ token }) {
   }
 }
 
-async function hydrateCuratedLists({ token }) {
+async function hydrateCuratedLists({ token, lists: prefetched } = {}) {
   const els = getCuratedListsEls();
   if (!els) return;
 
-  const lists = await loadPublicLists({ token });
+  const lists = prefetched?.length ? prefetched : await loadPublicLists({ token });
   const top = (lists || []).slice(0, els.cards.length || 3);
   if (!top.length) return;
 
@@ -522,7 +526,7 @@ async function hydrateCuratedLists({ token }) {
     // Main card image (front layer)
     const mainLayer = stackLayers[2] || card.querySelector('.absolute.overflow-hidden');
     const mainImg = mainLayer?.querySelector('img');
-    const cover = previewRestaurants[0]?.image_url || pickListCoverImage(list);
+    const cover = safeImgSrc(previewRestaurants[0]?.image_url || pickListCoverImage(list), 400);
     if (mainImg) {
       if (cover) {
         mainImg.src = cover;
@@ -536,14 +540,14 @@ async function hydrateCuratedLists({ token }) {
     // Middle shadow layer — 2nd restaurant image
     const midImg = stackLayers[1]?.querySelector('img');
     if (midImg && previewRestaurants[1]?.image_url) {
-      midImg.src = previewRestaurants[1].image_url;
+      midImg.src = safeImgSrc(previewRestaurants[1].image_url, 200);
     }
 
     // Back shadow layer — 3rd restaurant image (or reuse 2nd if only 2 available)
     const backImg = stackLayers[0]?.querySelector('img');
     if (backImg) {
       const backSrc = previewRestaurants[2]?.image_url || previewRestaurants[1]?.image_url;
-      if (backSrc) backImg.src = backSrc;
+      if (backSrc) backImg.src = safeImgSrc(backSrc, 200);
     }
 
     const titleOverlay = card.querySelector('p.absolute.bottom-4');
@@ -705,18 +709,18 @@ async function loadFriendActivity({ token }) {
   });
 }
 
-async function hydrateFriendActivity({ token }) {
+async function hydrateFriendActivity({ token, activity: prefetched } = {}) {
   const els = getFriendActivityEls();
   if (!els) return;
 
-  let data;
-  try {
-    data = await loadFriendActivity({ token });
-  } catch {
-    data = null;
+  let activity;
+  if (prefetched) {
+    activity = Array.isArray(prefetched) ? prefetched.slice(0, 3) : [];
+  } else {
+    let data;
+    try { data = await loadFriendActivity({ token }); } catch { data = null; }
+    activity = Array.isArray(data?.activity) ? data.activity.slice(0, 3) : [];
   }
-
-  const activity = Array.isArray(data?.activity) ? data.activity.slice(0, 3) : [];
   if (!activity.length) {
     els.grid.innerHTML = `
       <div class="catalog-glass p-8 rounded-xl">
@@ -845,18 +849,17 @@ async function loadRecentVisits({ token, userId }) {
   });
 }
 
-async function hydrateRecentlyVisited({ token, userId }) {
+async function hydrateRecentlyVisited({ token, userId, visits: prefetched } = {}) {
   const els = getRecentlyVisitedEls();
   if (!els) return;
 
-  // Requested copy update
   if (els.heading) els.heading.textContent = 'Recently Visited';
 
   let visits;
-  try {
-    visits = await loadRecentVisits({ token, userId });
-  } catch {
-    visits = [];
+  if (prefetched) {
+    visits = prefetched;
+  } else {
+    try { visits = await loadRecentVisits({ token, userId }); } catch { visits = []; }
   }
 
   const list = Array.isArray(visits) ? visits : [];
@@ -915,13 +918,20 @@ async function hydrateRecentlyVisited({ token, userId }) {
 
 async function init() {
   startProgress();
-  // Optional auth — homepage is public. Protected sections degrade gracefully for guests.
-  const user = await fetchCurrentUser({ redirectOnFail: null });
+  const token = getToken();
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+  // Single request replaces 5 separate API calls — one cold start, parallel DB queries server-side
+  let homeData = { popular: [], lists: [], activity: [], recent: [], user: null };
+  try {
+    homeData = await fetchJson(`${FASTAPI_BASE}/api/home-data`, { headers });
+  } catch { /* degrade gracefully */ }
+
+  const user = homeData.user || (token ? await fetchCurrentUser({ redirectOnFail: null }) : null);
 
   ensureAccountDropdown({ user });
   ensureViewAllLink();
 
-  // Gate guest vs. authenticated sections
   const guestSection = document.getElementById('guestSection');
   const friendActivitySection = document.getElementById('friendActivitySection');
   const recentlyVisitedSection = document.getElementById('recentlyVisitedSection');
@@ -933,14 +943,7 @@ async function init() {
     guestSection?.classList.remove('hidden');
   }
 
-  // Step 1: Popular Right Now + cuisine filtering
-  let popularRestaurants = [];
-  try {
-    popularRestaurants = await loadPopularRestaurants();
-  } catch {
-    popularRestaurants = [];
-  }
-
+  const popularRestaurants = Array.isArray(homeData.popular) ? homeData.popular : [];
   const cuisineState = { active: 'all' };
   setupCuisinePills({
     allRestaurants: popularRestaurants,
@@ -951,20 +954,15 @@ async function init() {
   });
   renderPopularRightNow({ restaurants: popularRestaurants, cuisine: cuisineState.active });
 
-  // Step 2: Search dropdown (FastAPI-backed)
   setupHomeSearch();
-
   finishProgress();
 
-  // Curated Lists + The Journal — public sections, load for everyone
-  const token = getToken();
-  hydrateCuratedLists({ token }).catch(() => {});
+  hydrateCuratedLists({ token, lists: homeData.lists }).catch(() => {});
   hydrateJournal().catch(() => {});
 
-  // Next sections: Friend activity + recent visits (auth-gated; guests see empty states)
-  if (token && user?.id != null) {
-    hydrateFriendActivity({ token }).catch(() => {});
-    hydrateRecentlyVisited({ token, userId: user.id }).catch(() => {});
+  if (user?.id != null) {
+    hydrateFriendActivity({ activity: homeData.activity }).catch(() => {});
+    hydrateRecentlyVisited({ visits: homeData.recent }).catch(() => {});
   }
 }
 

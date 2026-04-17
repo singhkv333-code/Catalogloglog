@@ -13,9 +13,13 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function safeImgSrc(url) {
+function safeImgSrc(url, width = 400) {
   const str = String(url || '').trim();
-  return str || null;
+  if (!str) return null;
+  if (str.includes('res.cloudinary.com') && str.includes('/image/upload/')) {
+    return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+  }
+  return str;
 }
 
 async function fetchJson(url, { method = 'GET', headers = {}, body } = {}) {

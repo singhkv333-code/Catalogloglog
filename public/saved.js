@@ -7,6 +7,12 @@
 import { requireAuth, getToken, logout } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -136,7 +142,7 @@ function renderRowCard(b) {
   // nameSlug is for page navigation only — derived from the restaurant name
   const nameSlug = b?.slug || (b?.name ? b.name.toLowerCase().replace(/\s+/g, '-') : storedId);
   const href = nameSlug ? `restaurant?slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
-  const imgUrl = b?.image_url || b?.images?.[0] || '';
+  const imgUrl = cloudinaryResize(b?.image_url || b?.images?.[0] || '', 400);
   const when = formatWhen(b?.added_at);
 
   return `

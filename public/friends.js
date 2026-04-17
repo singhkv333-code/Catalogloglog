@@ -13,6 +13,12 @@
 import { requireAuth, getToken, logout } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
+function cloudinaryResize(url, width = 400) {
+  const str = String(url || '').trim();
+  if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
+  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -199,7 +205,7 @@ function renderActivityCard(a) {
   const restSlug = a?.restaurant_id || '';
   const restName = a?.restaurant_name || restSlug || 'Restaurant';
   const meta = [a?.restaurant_cuisine, a?.restaurant_area].filter(Boolean).join(' • ');
-  const imgUrl = a?.image_url || '';
+  const imgUrl = cloudinaryResize(a?.image_url || '', 400);
   const stars = Number(a?.stars ?? 0) || 0;
   const starsText = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
 
