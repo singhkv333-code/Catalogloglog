@@ -921,11 +921,19 @@ async function init() {
   const token = getToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  // Single request replaces 5 separate API calls — one cold start, parallel DB queries server-side
+  // Single request replaces 5 separate API calls — one cold start, parallel DB queries server-side.
+  // Falls back to individual endpoints if home-data is unavailable (e.g. first deploy, cold error).
   let homeData = { popular: [], lists: [], activity: [], recent: [], user: null };
   try {
     homeData = await fetchJson(`${FASTAPI_BASE}/api/home-data`, { headers });
-  } catch { /* degrade gracefully */ }
+  } catch { /* fall through to per-section fallbacks below */ }
+
+  // Popular fallback — ensures images always show even if home-data endpoint fails
+  if (!homeData.popular?.length) {
+    try {
+      homeData.popular = await fetchJson(`${FASTAPI_BASE}/restaurants/popular?limit=12`);
+    } catch { homeData.popular = []; }
+  }
 
   const user = homeData.user || (token ? await fetchCurrentUser({ redirectOnFail: null }) : null);
 
@@ -957,12 +965,13 @@ async function init() {
   setupHomeSearch();
   finishProgress();
 
-  hydrateCuratedLists({ token, lists: homeData.lists }).catch(() => {});
+  // Pass pre-fetched data; each function falls back to its own fetch if data is missing
+  hydrateCuratedLists({ token, lists: homeData.lists?.length ? homeData.lists : null }).catch(() => {});
   hydrateJournal().catch(() => {});
 
   if (user?.id != null) {
-    hydrateFriendActivity({ activity: homeData.activity }).catch(() => {});
-    hydrateRecentlyVisited({ visits: homeData.recent }).catch(() => {});
+    hydrateFriendActivity({ token, activity: homeData.activity?.length ? homeData.activity : null }).catch(() => {});
+    hydrateRecentlyVisited({ token, userId: user.id, visits: homeData.recent?.length ? homeData.recent : null }).catch(() => {});
   }
 }
 
