@@ -6,13 +6,16 @@
   "functions": {
     "api/server.js": {
       "memory": 512,
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "public/*.html"
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/server" },
-    { "source": "/restaurants/(.*)", "destination": "/api/server" },
-    { "source": "/restaurants", "destination": "/api/server" },
-    { "source": "/db-test", "destination": "/api/server" }
+{ "source": "/api/(.*)",             "destination": "/api/server" },
+    { "source": "/restaurant/:slug",     "destination": "/api/server" },
+    { "source": "/blog/:slug",           "destination": "/api/server" },
+    { "source": "/restaurants/(.*)",     "destination": "/api/server" },
+    { "source": "/restaurants",          "destination": "/api/server" },
+    { "source": "/db-test",              "destination": "/api/server" }
   ]
 }
