@@ -874,42 +874,42 @@ async function init() {
 
   const slug = getSlug();
   if (!slug) {
-    document.getElementById(‘restaurantName’).textContent = ‘Restaurant not found’;
+    document.getElementById('restaurantName').textContent = 'Restaurant not found';
     return;
   }
 
   // Show skeletons immediately — before any network calls
-  const nameEl = document.getElementById(‘restaurantName’);
-  const metaEl = document.getElementById(‘restaurantMeta’);
-  const avgEl = document.getElementById(‘ratingAvg’);
-  const countEl = document.getElementById(‘ratingCount’);
+  const nameEl = document.getElementById('restaurantName');
+  const metaEl = document.getElementById('restaurantMeta');
+  const avgEl = document.getElementById('ratingAvg');
+  const countEl = document.getElementById('ratingCount');
   [nameEl, metaEl, avgEl, countEl].forEach((el) => {
     if (!el) return;
-    el.classList.add(‘catalog-skeleton’, ‘rounded’);
+    el.classList.add('catalog-skeleton', 'rounded');
   });
   if (nameEl) {
-    nameEl.textContent = ‘’;
-    nameEl.style.display = ‘inline-block’;
-    nameEl.style.minWidth = ‘280px’;
-    nameEl.style.minHeight = ‘64px’;
+    nameEl.textContent = '';
+    nameEl.style.display = 'inline-block';
+    nameEl.style.minWidth = '280px';
+    nameEl.style.minHeight = '64px';
   }
   if (metaEl) {
-    metaEl.textContent = ‘’;
-    metaEl.style.display = ‘block’;
-    metaEl.style.maxWidth = ‘520px’;
-    metaEl.style.minHeight = ‘18px’;
+    metaEl.textContent = '';
+    metaEl.style.display = 'block';
+    metaEl.style.maxWidth = '520px';
+    metaEl.style.minHeight = '18px';
   }
   if (avgEl) {
-    avgEl.textContent = ‘’;
-    avgEl.style.display = ‘inline-block’;
-    avgEl.style.minWidth = ‘88px’;
-    avgEl.style.minHeight = ‘52px’;
+    avgEl.textContent = '';
+    avgEl.style.display = 'inline-block';
+    avgEl.style.minWidth = '88px';
+    avgEl.style.minHeight = '52px';
   }
   if (countEl) {
-    countEl.textContent = ‘’;
-    countEl.style.display = ‘block’;
-    countEl.style.minWidth = ‘120px’;
-    countEl.style.minHeight = ‘14px’;
+    countEl.textContent = '';
+    countEl.style.display = 'block';
+    countEl.style.minWidth = '120px';
+    countEl.style.minHeight = '14px';
   }
 
   // Auth and restaurant data fetch run in parallel — neither blocks the other
@@ -926,17 +926,17 @@ async function init() {
     const ex = restaurantOrError._err;
     [nameEl, metaEl, avgEl, countEl].forEach((el) => {
       if (!el) return;
-      el.classList.remove(‘catalog-skeleton’, ‘rounded’);
-      el.style.minWidth = ‘’;
-      el.style.minHeight = ‘’;
-      el.style.maxWidth = ‘’;
-      el.style.display = ‘’;
+      el.classList.remove('catalog-skeleton', 'rounded');
+      el.style.minWidth = '';
+      el.style.minHeight = '';
+      el.style.maxWidth = '';
+      el.style.display = '';
     });
-    const msg = ex?.message || ‘Failed to load restaurant.’;
+    const msg = ex?.message || 'Failed to load restaurant.';
     const statusHint =
-      /404/.test(msg) || /not found/i.test(msg) ? ‘Restaurant not found’ : ‘Failed to load restaurant’;
-    document.getElementById(‘restaurantName’).textContent = statusHint;
-    const meta = document.getElementById(‘restaurantMeta’);
+      /404/.test(msg) || /not found/i.test(msg) ? 'Restaurant not found' : 'Failed to load restaurant';
+    document.getElementById('restaurantName').textContent = statusHint;
+    const meta = document.getElementById('restaurantMeta');
     if (meta) meta.textContent = msg;
     return;
   }
