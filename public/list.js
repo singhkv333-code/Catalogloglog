@@ -124,7 +124,7 @@ function renderItemCard(item, { isOwner } = {}) {
   return `
     <a class="group block" href="${href}">
       <div class="relative aspect-[4/5] rounded-xl overflow-hidden bg-surface-container-lowest editorial-shadow">
-        ${imgUrl ? `<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="${escapeHtml(name)}" src="${escapeHtml(imgUrl)}" />` : ''}
+        ${imgUrl ? `<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="${escapeHtml(name)}" src="${escapeHtml(imgUrl)}" loading="lazy" />` : ''}
         <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
         ${removeBtn}
       </div>
@@ -296,7 +296,7 @@ function openAddRestaurantModal({ token, listId, onAdded }) {
             return `
               <button type="button" class="w-full text-left flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-surface-container-highest transition-colors" data-action="add" data-id="${escapeHtml(id)}">
                 <div class="w-14 h-14 rounded-lg overflow-hidden bg-surface-container-high flex-shrink-0">
-                  ${img ? `<img class="w-full h-full object-cover" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" />` : ''}
+                  ${img ? `<img class="w-full h-full object-cover" src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy" />` : ''}
                 </div>
                 <div class="min-w-0">
                   <div class="font-label font-bold text-sm truncate">${escapeHtml(name)}</div>

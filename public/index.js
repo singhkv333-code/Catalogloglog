@@ -366,6 +366,7 @@ function setupHomeSearch() {
         const img = document.createElement('img');
         img.className = 'w-full h-full object-cover';
         img.alt = r.name ? String(r.name) : 'Restaurant';
+        img.loading = 'lazy';
         img.src = src;
         imgWrap.appendChild(img);
       } else {

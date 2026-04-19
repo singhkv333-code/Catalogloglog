@@ -181,13 +181,13 @@ function renderListCard(list, { view = 'discover' } = {}) {
   const coverHtml = `
     <div class="relative h-[400px] mb-8 flex items-center justify-center">
       <div class="absolute inset-0 bg-surface-container-high rounded-xl stack-image-1 overflow-hidden opacity-40">
-        ${img1 ? `<img alt="" class="w-full h-full object-cover grayscale" src="${escapeHtml(img1)}"/>` : noImgFallback}
+        ${img1 ? `<img alt="" class="w-full h-full object-cover grayscale" src="${escapeHtml(img1)}" loading="lazy"/>` : noImgFallback}
       </div>
       <div class="absolute inset-0 bg-surface-container-high rounded-xl stack-image-2 overflow-hidden opacity-70">
-        ${img2 ? `<img alt="" class="w-full h-full object-cover" src="${escapeHtml(img2)}"/>` : noImgFallback}
+        ${img2 ? `<img alt="" class="w-full h-full object-cover" src="${escapeHtml(img2)}" loading="lazy"/>` : noImgFallback}
       </div>
       <div class="relative z-10 w-full h-full bg-surface-container-lowest rounded-xl overflow-hidden editorial-shadow transition-transform group-hover:-translate-y-2">
-        ${img3 ? `<img alt="" class="w-full h-full object-cover" src="${escapeHtml(img3)}"/>` : noImgFallback}
+        ${img3 ? `<img alt="" class="w-full h-full object-cover" src="${escapeHtml(img3)}" loading="lazy"/>` : noImgFallback}
         <div class="absolute top-4 right-4 bg-on-surface/90 text-surface text-[10px] px-3 py-1 rounded-full font-label tracking-widest font-bold backdrop-blur-md">${escapeHtml(
           badge
         )}</div>

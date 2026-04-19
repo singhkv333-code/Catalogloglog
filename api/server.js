@@ -2,6 +2,7 @@
 // Static files are served by Vercel from /public; this handler covers all API/backend routes.
 
 const path = require('path')
+const fs = require('fs')
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') })
 const express = require('express')
 const app = express()
@@ -18,6 +19,113 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 app.use(cors())
 app.use(express.json())
+
+// ================== SSR HELPERS ==================
+
+function _readHtml(name) {
+  try { return fs.readFileSync(path.join(__dirname, '..', 'public', name), 'utf8') } catch { return null }
+}
+
+const _TMPL = {
+  restaurant: _readHtml('restaurant.html'),
+  blog: _readHtml('blog.html'),
+}
+
+function _ea(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;') }
+function _et(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+
+function injectSeoHead(html, { title, description, canonical, image, ogType, jsonLd }) {
+  if (!html) return null
+  let m = ''
+  if (description) m += `\n  <meta name="description" content="${_ea(description)}">`
+  if (canonical)   m += `\n  <link rel="canonical" href="${_ea(canonical)}">`
+  m += `\n  <meta property="og:title" content="${_ea(title)}">`
+  if (description) m += `\n  <meta property="og:description" content="${_ea(description)}">`
+  if (image)       m += `\n  <meta property="og:image" content="${_ea(image)}">`
+  if (canonical)   m += `\n  <meta property="og:url" content="${_ea(canonical)}">`
+  m += `\n  <meta property="og:type" content="${_ea(ogType || 'website')}">`
+  m += `\n  <meta name="twitter:card" content="summary_large_image">`
+  m += `\n  <meta name="twitter:title" content="${_ea(title)}">`
+  if (image)       m += `\n  <meta name="twitter:image" content="${_ea(image)}">`
+  if (jsonLd)      m += `\n  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`
+  return html
+    .replace(/<title>[^<]*<\/title>/, `<title>${_et(title)}</title>`)
+    .replace('</head>', m + '\n</head>')
+}
+
+function buildAreaCuisinePage({ title, description, canonical, h1, subtitle, restaurants, crumbs, jsonLd }) {
+  const e = _ea
+  const cards = restaurants.length
+    ? restaurants.map(r => {
+        const slug = r.name.toLowerCase().replace(/\s+/g, '-')
+        const img = r.image_url
+          ? `<div style="aspect-ratio:16/9;overflow:hidden"><img src="${e(r.image_url)}" alt="${e(r.name)} — ${e(r.cuisine || '')} restaurant in ${e(r.area || '')}, Delhi" loading="lazy" style="width:100%;height:100%;object-fit:cover"></div>`
+          : `<div style="aspect-ratio:16/9;background:#f5ede8"></div>`
+        const stars = r.avg_rating > 0 ? ` · ★ ${Number(r.avg_rating).toFixed(1)}` : ''
+        return `<a href="/restaurant/${e(slug)}" style="display:block;border-radius:1rem;overflow:hidden;background:#fff;box-shadow:0 4px 20px rgba(29,27,23,.07);text-decoration:none;color:inherit">${img}<div style="padding:1rem"><strong style="display:block;font-family:Newsreader,serif;font-size:1.125rem;font-style:italic;font-weight:600">${e(r.name)}</strong><span style="font-size:.875rem;color:#6b6560;font-family:Manrope,sans-serif">${e(r.cuisine || 'Restaurant')}${stars}</span></div></a>`
+      }).join('\n')
+    : '<p style="color:#6b6560;font-family:Manrope,sans-serif">No restaurants found.</p>'
+
+  const breadHtml = crumbs.map((b, i) => {
+    const last = i === crumbs.length - 1
+    return last
+      ? `<li style="color:#1d1b17">${e(b.name)}</li>`
+      : `<li><a href="${e(b.url)}" style="color:#6b6560;text-decoration:none">${e(b.name)}</a></li><li style="opacity:.4;margin:0 .3rem">›</li>`
+  }).join('')
+
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${_et(title)}</title>
+  <meta name="description" content="${e(description)}">
+  <link rel="canonical" href="${e(canonical)}">
+  <meta property="og:title" content="${e(title)}">
+  <meta property="og:description" content="${e(description)}">
+  <meta property="og:url" content="${e(canonical)}">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="${e(title)}">
+  <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/tw.css">
+  <link rel="stylesheet" href="/styles.css">
+  <style>.glass-nav{backdrop-filter:blur(16px);background-color:rgba(254,249,241,.8)}</style>
+</head>
+<body style="margin:0;background:#fef9f1;color:#1d1b17;font-family:Manrope,sans-serif">
+<nav class="glass-nav" style="position:fixed;top:0;left:0;right:0;z-index:50;border-bottom:1px solid rgba(29,27,23,.06)">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:1.25rem 3rem;max-width:1536px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:3rem">
+      <a href="/" style="font-family:Newsreader,serif;font-size:1.875rem;font-style:italic;font-weight:600;color:#1d1b17;text-decoration:none;letter-spacing:-.05em">Catalog</a>
+      <div style="display:flex;gap:2rem">
+        <a href="/all-restaurants" style="color:#1d1b17;opacity:.7;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none">EXPLORE</a>
+        <a href="/blog" style="color:#1d1b17;opacity:.7;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none">BLOG</a>
+        <a href="/lists" style="color:#1d1b17;opacity:.7;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none">LISTS</a>
+      </div>
+    </div>
+    <a href="/login" style="font-size:.875rem;padding:.5rem 1.25rem;border-radius:9999px;background:#690008;color:#fff;text-decoration:none">Sign in</a>
+  </div>
+</nav>
+<main style="padding-top:6rem;padding-bottom:4rem;max-width:1536px;margin:0 auto;padding-left:3rem;padding-right:3rem">
+  <nav aria-label="Breadcrumb" style="margin-bottom:1.5rem;font-size:.875rem">
+    <ol style="list-style:none;display:flex;align-items:center;gap:.25rem;margin:0;padding:0;flex-wrap:wrap">${breadHtml}</ol>
+  </nav>
+  <h1 style="font-family:Newsreader,serif;font-size:clamp(2.5rem,5vw,3.5rem);font-style:italic;font-weight:600;margin:0 0 .75rem">${e(h1)}</h1>
+  <p style="color:#6b6560;margin-bottom:2.5rem">${e(subtitle)}</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.5rem">
+    ${cards}
+  </div>
+</main>
+<footer style="padding:2.5rem 3rem;border-top:1px solid rgba(29,27,23,.08);text-align:center;font-size:.875rem;color:#6b6560">
+  <p>© 2026 Catalog · <a href="/about" style="color:inherit">About</a> · <a href="/support" style="color:inherit">Support</a> · <a href="/privacy" style="color:inherit">Privacy</a></p>
+</footer>
+</body>
+</html>`
+}
 
 // Add name column if it doesn't exist yet (idempotent migration)
 pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS name TEXT`).catch(() => {})
@@ -100,6 +208,99 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 app.get('/api/ping', async (_req, res) => {
   try { await pool.query('SELECT 1'); res.json({ ok: true }) }
   catch (err) { res.status(500).json({ ok: false, error: err.message }) }
+})
+
+// ================== SITEMAP ==================
+
+app.get('/sitemap.xml', async (_req, res) => {
+  const cacheKey = 'sitemap:xml'
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    return res.send(cached)
+  }
+  try {
+    const [rests, blogs, lists, areas, cuisines] = await Promise.all([
+      pool.query(`SELECT name, last_updated FROM restaurants WHERE name IS NOT NULL`),
+      pool.query(`SELECT slug, created_at FROM blogs WHERE slug IS NOT NULL`),
+      pool.query(`SELECT id FROM lists WHERE is_public = true`),
+      pool.query(`SELECT DISTINCT area FROM restaurants WHERE area IS NOT NULL AND area != ''`),
+      pool.query(`SELECT DISTINCT cuisine FROM restaurants WHERE cuisine IS NOT NULL AND cuisine != ''`),
+    ])
+    const B = 'https://www.catalogapp.in'
+    const today = new Date().toISOString().slice(0, 10)
+    const urlTag = (loc, { lastmod, changefreq = 'monthly', priority } = {}) =>
+      `<url><loc>${loc}</loc>${lastmod ? `<lastmod>${lastmod}</lastmod>` : ''}<changefreq>${changefreq}</changefreq>${priority ? `<priority>${priority}</priority>` : ''}</url>`
+
+    const lines = [
+      urlTag(`${B}/`,                { changefreq: 'weekly',  priority: '1.0', lastmod: today }),
+      urlTag(`${B}/all-restaurants`, { changefreq: 'weekly',  priority: '0.8', lastmod: today }),
+      urlTag(`${B}/blog`,            { changefreq: 'weekly',  priority: '0.7', lastmod: today }),
+      urlTag(`${B}/about`,           { changefreq: 'monthly', priority: '0.4' }),
+      urlTag(`${B}/support`,         { changefreq: 'monthly', priority: '0.4' }),
+      ...rests.rows.map(r => urlTag(
+        `${B}/restaurant/${encodeURIComponent(r.name.toLowerCase().replace(/\s+/g, '-'))}`,
+        { lastmod: r.last_updated ? new Date(r.last_updated).toISOString().slice(0, 10) : today, priority: '0.8' }
+      )),
+      ...blogs.rows.map(b => urlTag(
+        `${B}/blog/${encodeURIComponent(b.slug)}`,
+        { lastmod: b.created_at ? new Date(b.created_at).toISOString().slice(0, 10) : today, priority: '0.7' }
+      )),
+      ...lists.rows.map(l => urlTag(`${B}/lists/${l.id}`, { changefreq: 'weekly', priority: '0.5' })),
+      ...areas.rows.map(a => urlTag(
+        `${B}/restaurants/area/${encodeURIComponent(a.area.toLowerCase().replace(/\s+/g, '-'))}`,
+        { changefreq: 'weekly', priority: '0.9' }
+      )),
+      ...cuisines.rows.map(c => urlTag(
+        `${B}/restaurants/cuisine/${encodeURIComponent(c.cuisine.toLowerCase().replace(/\s+/g, '-'))}`,
+        { changefreq: 'weekly', priority: '0.9' }
+      )),
+    ]
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${lines.join('\n')}\n</urlset>`
+    await cacheSet(cacheKey, xml, 24 * 60 * 60)
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=86400')
+    res.send(xml)
+  } catch (err) {
+    res.status(500).type('text/plain').send(`Sitemap error: ${err.message}`)
+  }
+})
+
+// ================== BLOG API ==================
+
+app.get('/api/blogs', async (_req, res) => {
+  const cacheKey = 'blogs:list'
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
+  try {
+    const r = await pool.query(
+      `SELECT id, title, slug, author, city, read_time, hero_image, tag, created_at
+       FROM blogs WHERE slug IS NOT NULL ORDER BY created_at DESC LIMIT 50`
+    )
+    await cacheSet(cacheKey, r.rows, 30 * 60)
+    res.json(r.rows)
+  } catch (err) { res.status(500).json({ message: err.message }) }
+})
+
+app.get('/api/blogs/:slug', async (req, res) => {
+  const { slug } = req.params
+  const cacheKey = `blog:slug:${slug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
+  try {
+    const [blogR, restR] = await Promise.all([
+      pool.query(`SELECT * FROM blogs WHERE slug = $1 LIMIT 1`, [slug]),
+      pool.query(
+        `SELECT br.restaurant_name, br.area FROM blog_restaurants br
+         JOIN blogs b ON b.id = br.blog_id WHERE b.slug = $1`, [slug]
+      )
+    ])
+    if (!blogR.rows.length) return res.status(404).json({ message: 'Not found' })
+    const result = { ...blogR.rows[0], restaurants: restR.rows }
+    await cacheSet(cacheKey, result, 60 * 60)
+    res.json(result)
+  } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 // ================== HOME DATA ==================
@@ -208,9 +409,11 @@ app.post('/signup', async (req, res) => {
   if (!email || !password) return res.status(400).json({ message: 'Email and password are required' })
   if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters' })
   try {
-    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email])
+    const [existing, hashedPassword] = await Promise.all([
+      pool.query('SELECT id FROM users WHERE email = $1', [email]),
+      bcrypt.hash(password, 10),
+    ])
     if (existing.rows.length > 0) return res.status(400).json({ message: 'User already exists' })
-    const hashedPassword = await bcrypt.hash(password, 10)
     const otp = Math.floor(1000 + Math.random() * 9000).toString()
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000)
     await pool.query(
@@ -489,6 +692,104 @@ app.get('/restaurants', async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
+// ================== AREA LANDING PAGES ==================
+
+app.get('/restaurants/area/:area', async (req, res) => {
+  const areaSlug = req.params.area.toLowerCase()
+  const displayArea = areaSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const cacheKey = `page:area:${areaSlug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    return res.send(cached)
+  }
+  try {
+    const r = await pool.query(
+      `SELECT rs.name, rs.area, rs.cuisine, rs.image_url,
+              COALESCE(s.average_rating, 0) AS avg_rating
+       FROM restaurants rs
+       LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = rs.id::text
+       WHERE LOWER(REPLACE(rs.area, ' ', '-')) = $1 OR LOWER(rs.area) = $2
+       ORDER BY s.total_ratings DESC NULLS LAST, rs.name ASC`,
+      [areaSlug, areaSlug.replace(/-/g, ' ')]
+    )
+    const canonical = `https://www.catalogapp.in/restaurants/area/${areaSlug}`
+    const count = r.rows.length
+    const title = `Restaurants in ${displayArea}, Delhi | Catalog`
+    const description = `Discover the best restaurants in ${displayArea}, Delhi. ${count}+ options across all cuisines — rated and reviewed by real diners.`
+    const jsonLd = {
+      '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.catalogapp.in' },
+        { '@type': 'ListItem', position: 2, name: 'Restaurants', item: 'https://www.catalogapp.in/all-restaurants' },
+        { '@type': 'ListItem', position: 3, name: displayArea, item: canonical },
+      ],
+    }
+    const html = buildAreaCuisinePage({
+      title, description, canonical,
+      h1: `Restaurants in ${displayArea}`,
+      subtitle: `${count} ${count === 1 ? 'restaurant' : 'restaurants'} found`,
+      restaurants: r.rows,
+      crumbs: [{ name: 'Home', url: '/' }, { name: 'Restaurants', url: '/all-restaurants' }, { name: displayArea }],
+      jsonLd,
+    })
+    await cacheSet(cacheKey, html, TTL.RESTAURANTS_LIST)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    res.send(html)
+  } catch (err) { res.status(500).send(`<h1>Error: ${err.message}</h1>`) }
+})
+
+// ================== CUISINE LANDING PAGES ==================
+
+app.get('/restaurants/cuisine/:cuisine', async (req, res) => {
+  const cuisineSlug = req.params.cuisine.toLowerCase()
+  const displayCuisine = cuisineSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+  const cacheKey = `page:cuisine:${cuisineSlug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    return res.send(cached)
+  }
+  try {
+    const r = await pool.query(
+      `SELECT rs.name, rs.area, rs.cuisine, rs.image_url,
+              COALESCE(s.average_rating, 0) AS avg_rating
+       FROM restaurants rs
+       LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = rs.id::text
+       WHERE LOWER(REPLACE(rs.cuisine, ' ', '-')) = $1 OR LOWER(rs.cuisine) = $2
+       ORDER BY s.total_ratings DESC NULLS LAST, rs.name ASC`,
+      [cuisineSlug, cuisineSlug.replace(/-/g, ' ')]
+    )
+    const canonical = `https://www.catalogapp.in/restaurants/cuisine/${cuisineSlug}`
+    const count = r.rows.length
+    const title = `Best ${displayCuisine} Restaurants in Delhi | Catalog`
+    const description = `Find the best ${displayCuisine} restaurants in Delhi — ${count}+ options rated by real diners on Catalog.`
+    const jsonLd = {
+      '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.catalogapp.in' },
+        { '@type': 'ListItem', position: 2, name: 'Restaurants', item: 'https://www.catalogapp.in/all-restaurants' },
+        { '@type': 'ListItem', position: 3, name: displayCuisine, item: canonical },
+      ],
+    }
+    const html = buildAreaCuisinePage({
+      title, description, canonical,
+      h1: `${displayCuisine} Restaurants in Delhi`,
+      subtitle: `${count} ${count === 1 ? 'restaurant' : 'restaurants'} found`,
+      restaurants: r.rows,
+      crumbs: [{ name: 'Home', url: '/' }, { name: 'Restaurants', url: '/all-restaurants' }, { name: displayCuisine }],
+      jsonLd,
+    })
+    await cacheSet(cacheKey, html, TTL.RESTAURANTS_LIST)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600')
+    res.send(html)
+  } catch (err) { res.status(500).send(`<h1>Error: ${err.message}</h1>`) }
+})
+
 app.get('/restaurants/:slug', async (req, res) => {
   const slug = req.params.slug.toLowerCase().replace(/\s+/g, '-')
   const cacheKey = `restaurant:slug:${slug}`
@@ -508,6 +809,96 @@ app.get('/restaurants/:slug', async (req, res) => {
     await cacheSet(cacheKey, row, TTL.RESTAURANT_DETAIL)
     res.json(row)
   } catch (err) { res.status(500).json({ message: err.message }) }
+})
+
+// ================== RESTAURANT PAGE SSR ==================
+
+app.get('/restaurant/:slug', async (req, res) => {
+  const slug = req.params.slug.toLowerCase().replace(/\s+/g, '-')
+  const cacheKey = `page:restaurant:${slug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
+    return res.send(cached)
+  }
+  try {
+    const restR = await pool.query(
+      `SELECT id, name, area, cuisine, image_url, images, opening_hours,
+              latitude, longitude, formatted_address, phone_number
+       FROM restaurants WHERE LOWER(REPLACE(name, ' ', '-')) = $1 LIMIT 1`,
+      [slug]
+    )
+    if (!restR.rows.length) {
+      return res.status(404).send(
+        '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Not found — Catalog</title></head>' +
+        '<body><h1>Restaurant not found</h1><p><a href="/all-restaurants">Browse all restaurants</a></p></body></html>'
+      )
+    }
+    const r = restR.rows[0]
+    const [ratingR, reviewR] = await Promise.all([
+      pool.query(
+        `SELECT average_rating, total_ratings, total_reviews
+         FROM restaurant_ratings_summary WHERE restaurant_id = $1`,
+        [String(r.id)]
+      ),
+      pool.query(
+        `SELECT rev.content, rev.rating, u.username
+         FROM reviews rev LEFT JOIN users u ON rev.user_id = u.id
+         WHERE rev.restaurant_id = $1 OR rev.restaurant_id = $2
+         ORDER BY rev.created_at DESC LIMIT 3`,
+        [String(r.id), slug]
+      ),
+    ])
+    const rating = ratingR.rows[0] || {}
+    const avgRating = rating.average_rating ? Number(rating.average_rating).toFixed(1) : null
+    const totalRatings = Number(rating.total_ratings) || 0
+    const totalReviews = Number(rating.total_reviews) || 0
+    const images = Array.isArray(r.images) ? r.images : []
+    const image = images.length ? images[0] : (r.image_url || null)
+    const title = `${r.name} | ${r.cuisine} Restaurant | ${r.area}, Delhi — Catalog`
+    const description = `Visit ${r.name} in ${r.area}, Delhi. ${r.cuisine} cuisine.${avgRating ? ` Rated ${avgRating}/5 by ${totalRatings} diners.` : ''} See reviews, photos and details on Catalog.`
+    const canonical = `https://www.catalogapp.in/restaurant/${slug}`
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Restaurant',
+      name: r.name,
+      url: canonical,
+      servesCuisine: r.cuisine,
+    }
+    if (r.area || r.formatted_address) {
+      jsonLd.address = {
+        '@type': 'PostalAddress',
+        ...(r.formatted_address && { streetAddress: r.formatted_address }),
+        addressLocality: r.area,
+        addressRegion: 'Delhi',
+        addressCountry: 'IN',
+      }
+    }
+    if (r.latitude && r.longitude) jsonLd.geo = { '@type': 'GeoCoordinates', latitude: r.latitude, longitude: r.longitude }
+    if (r.phone_number) jsonLd.telephone = r.phone_number
+    if (r.opening_hours) jsonLd.openingHours = r.opening_hours
+    if (image) jsonLd.image = image
+    if (avgRating && totalRatings > 0) {
+      jsonLd.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: parseFloat(avgRating),
+        reviewCount: totalReviews || totalRatings,
+        bestRating: 5,
+        worstRating: 1,
+      }
+    }
+    const html = injectSeoHead(_TMPL.restaurant, { title, description, canonical, image, ogType: 'restaurant', jsonLd })
+    if (!html) {
+      // Template not available — serve minimal SEO page
+      const fallback = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${_et(title)}</title><meta name="description" content="${_ea(description)}"><link rel="canonical" href="${_ea(canonical)}"><meta property="og:title" content="${_ea(title)}"><meta property="og:description" content="${_ea(description)}"><meta property="og:url" content="${_ea(canonical)}"><meta property="og:type" content="restaurant">${image ? `<meta property="og:image" content="${_ea(image)}">` : ''}<meta name="twitter:card" content="summary_large_image"><script type="application/ld+json">${JSON.stringify(jsonLd)}</script></head><body><p>Loading…</p><script>window.location.replace('/restaurant?slug=${encodeURIComponent(slug)}')</script></body></html>`
+      return res.setHeader('Content-Type', 'text/html; charset=utf-8').send(fallback)
+    }
+    await cacheSet(cacheKey, html, TTL.RESTAURANT_DETAIL)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
+    res.send(html)
+  } catch (err) { res.status(500).send(`<h1>Error: ${err.message}</h1>`) }
 })
 
 // ============================================================
@@ -1494,6 +1885,47 @@ app.get('/api/users/:userId/reviews', authMiddleware, async (req, res) => {
     )
     res.json(r.rows)
   } catch (err) { res.status(500).json({ message: err.message }) }
+})
+
+// ================== BLOG PAGE SSR ==================
+
+app.get('/blog/:slug', async (req, res) => {
+  const { slug } = req.params
+  const cacheKey = `page:blog:${slug}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
+    return res.send(cached)
+  }
+  try {
+    const blogR = await pool.query(
+      `SELECT id, title, slug, author, hero_image, content, created_at FROM blogs WHERE slug = $1 LIMIT 1`,
+      [slug]
+    )
+    if (!blogR.rows.length) return res.redirect('/blog')
+    const post = blogR.rows[0]
+    const title = `${post.title} — Catalog Journal`
+    const raw = String(post.content || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+    const description = raw.slice(0, 155) || `Read "${post.title}" on Catalog Journal.`
+    const canonical = `https://www.catalogapp.in/blog/${slug}`
+    const image = post.hero_image || null
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: post.title,
+      author: { '@type': 'Person', name: post.author || 'Catalog' },
+      datePublished: post.created_at,
+      publisher: { '@type': 'Organization', name: 'Catalog', url: 'https://www.catalogapp.in' },
+      ...(image && { image }),
+    }
+    const html = injectSeoHead(_TMPL.blog, { title, description, canonical, image, ogType: 'article', jsonLd })
+    if (!html) return res.redirect('/blog')
+    await cacheSet(cacheKey, html, 60 * 60)
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400')
+    res.send(html)
+  } catch { res.redirect('/blog') }
 })
 
 // Export for Vercel — do NOT call app.listen()

@@ -1131,27 +1131,27 @@ async function init() {
   async function refreshRatings() {
     let dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let totalRatings = 0;
-    try {
-      const s = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}`);
+
+    const [s, u] = await Promise.all([
+      fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}`).catch(() => null),
+      fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}/user`, { headers }).catch(() => null),
+    ]);
+
+    if (s) {
       const avg = Number(s?.average_rating ?? 0);
       const total = Number(s?.total_ratings ?? 0);
       totalRatings = total;
       if (s?.distribution && typeof s.distribution === 'object') dist = s.distribution;
       ratingAvg.textContent = total > 0 ? avg.toFixed(1) : '—';
       ratingCount.textContent = total > 0 ? `${total} rating${total === 1 ? '' : 's'}` : 'No ratings yet';
-    } catch {
+    } else {
       ratingAvg.textContent = '—';
       ratingCount.textContent = 'No ratings yet';
     }
 
     updateRatingBreakdown(dist, totalRatings);
 
-    try {
-      const u = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(restaurantId)}/user`, { headers });
-      currentUserStars = u?.rated ? Number(u?.stars ?? 0) : 0;
-    } catch {
-      currentUserStars = 0;
-    }
+    currentUserStars = u?.rated ? Number(u?.stars ?? 0) : 0;
 
     renderStars(yourStars, currentUserStars, async (stars) => {
       try {
