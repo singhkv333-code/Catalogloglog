@@ -1,7 +1,7 @@
 // List detail controller (new design)
 // PORT FROM OLD PROJECT: list detail + list item add/remove + list like/unlike.
 
-import { requireAuth, getToken, logout } from './auth.js';
+import { fetchCurrentUser, getToken, logout, showSignInPrompt } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
 function escapeHtml(value) {
@@ -31,6 +31,11 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
   accountBtn.style.visibility = 'visible';
+
+  if (!user) {
+    accountBtn.innerHTML = '<a href="login" style="text-decoration:none;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#690008">Sign in</a>';
+    return;
+  }
 
   const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
   accountBtn.setAttribute('aria-label', 'Account menu');
@@ -338,12 +343,10 @@ function openAddRestaurantModal({ token, listId, onAdded }) {
 }
 
 async function init() {
-  const user = await requireAuth({ redirectTo: 'login' });
-  if (!user) return;
+  const user = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user });
 
   const token = getToken();
-  if (!token) return;
 
   const listId = getListId();
   if (!listId) {
@@ -351,7 +354,7 @@ async function init() {
     return;
   }
 
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   const els = {
     eyebrow: document.getElementById('listEyebrow'),
@@ -460,6 +463,7 @@ async function init() {
 
   els.likeBtn.addEventListener('click', async () => {
     if (els.likeBtn.style.display === 'none') return;
+    if (!token) { showSignInPrompt({ message: 'Sign in to like this list.' }); return; }
     const liked = els.likeBtn.dataset.liked === '1';
     els.likeBtn.disabled = true;
     try {

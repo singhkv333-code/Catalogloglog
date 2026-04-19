@@ -1,7 +1,7 @@
 // Restaurant detail controller (new design)
 // PORT FROM OLD PROJECT: FastAPI endpoints for restaurants/ratings/reviews/visits/bookmarks + list membership.
 
-import { requireAuth, getToken, logout } from './auth.js';
+import { fetchCurrentUser, getToken, logout, showSignInPrompt } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 import { startProgress, finishProgress } from './progress.js';
 
@@ -55,6 +55,11 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
   accountBtn.style.visibility = 'visible';
+
+  if (!user) {
+    accountBtn.innerHTML = '<a href="login" style="text-decoration:none;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#690008">Sign in</a>';
+    return;
+  }
 
   const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
   accountBtn.setAttribute('aria-label', 'Account menu');
@@ -869,12 +874,10 @@ async function hydrateFriendsBeenHere({ token, slug }) {
 async function init() {
   startProgress();
   window.__CATALOG_RESTAURANT_INIT_STARTED__ = true;
-  const user = await requireAuth({ redirectTo: 'login' });
-  if (!user) { finishProgress(); return; }
+  const user = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user });
 
   const token = getToken();
-  if (!token) return;
 
   const slug = getSlug();
   if (!slug) {
@@ -963,8 +966,10 @@ async function init() {
     el.style.display = '';
   });
 
-  hydrateFriendsBeenHere({ token, slug });
-  hydrateFriendsRating({ token, slug });
+  if (token) {
+    hydrateFriendsBeenHere({ token, slug });
+    hydrateFriendsRating({ token, slug });
+  }
 
   const img = document.getElementById('restaurantHeroImg');
   const imgWrap = document.getElementById('restaurantHeroImgWrap');
@@ -1044,7 +1049,7 @@ async function init() {
     openingHours: restaurant?.opening_hours ?? null,
   });
 
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
   // Fetch which reviews the user has already liked from the DB (source of truth).
   // Falls back to empty map so the page still loads if the endpoint fails.
@@ -1079,6 +1084,7 @@ async function init() {
   }
 
   beenBtn?.addEventListener('click', async () => {
+    if (!token) { showSignInPrompt({ message: 'Sign in to mark restaurants you\'ve visited.' }); return; }
     const active = beenBtn.dataset.active === '1';
     // Optimistic update — respond instantly, sync after
     setBtnActive(beenBtn, !active, { activeLabel: 'Been', inactiveLabel: 'Been' });
@@ -1102,6 +1108,7 @@ async function init() {
   });
 
   savedBtn?.addEventListener('click', async () => {
+    if (!token) { showSignInPrompt({ message: 'Sign in to save restaurants for later.' }); return; }
     const active = savedBtn.dataset.active === '1';
     // Optimistic update — respond instantly, sync after
     setBtnActive(savedBtn, !active, { activeLabel: 'Saved', inactiveLabel: 'Save' });
@@ -1154,6 +1161,7 @@ async function init() {
     currentUserStars = u?.rated ? Number(u?.stars ?? 0) : 0;
 
     renderStars(yourStars, currentUserStars, async (stars) => {
+      if (!token) { showSignInPrompt({ message: 'Sign in to rate this restaurant.' }); return; }
       try {
         await fetchJson(`${FASTAPI_BASE}/api/ratings`, {
           method: 'POST',
@@ -1367,7 +1375,7 @@ async function init() {
 
     const tokenNow = getToken();
     if (!tokenNow) {
-      window.location.replace('login');
+      showSignInPrompt({ message: 'Sign in to like and reply to reviews.' });
       return;
     }
     const headersNow = { Authorization: `Bearer ${tokenNow}` };
@@ -1755,6 +1763,7 @@ async function init() {
 
   reviewForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (!token) { showSignInPrompt({ message: 'Sign in to post a review.' }); return; }
     if (reviewError) {
       reviewError.textContent = '';
       reviewError.classList.add('hidden');
@@ -1891,6 +1900,7 @@ async function init() {
   }
 
   addToListBtn?.addEventListener('click', async () => {
+    if (!token) { showSignInPrompt({ message: 'Sign in to add this restaurant to a list.' }); return; }
     addToListBtn.disabled = true;
     try {
       const d = await fetchJson(`${FASTAPI_BASE}/api/restaurants/${encodeURIComponent(restaurantId)}/in-lists`, {

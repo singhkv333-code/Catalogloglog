@@ -4,7 +4,7 @@
 // - DELETE /api/bookmarks/{restaurant_id}
 // - POST /api/visits/{restaurant_id}
 
-import { requireAuth, getToken, logout } from './auth.js';
+import { fetchCurrentUser, getToken, logout } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
 function cloudinaryResize(url, width = 400) {
@@ -40,6 +40,11 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
   accountBtn.style.visibility = 'visible';
+
+  if (!user) {
+    accountBtn.innerHTML = '<a href="login" style="text-decoration:none;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#690008">Sign in</a>';
+    return;
+  }
 
   const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
   accountBtn.setAttribute('aria-label', 'Account menu');
@@ -179,12 +184,23 @@ function renderRowCard(b) {
 }
 
 async function init() {
-  const user = await requireAuth({ redirectTo: 'login' });
-  if (!user) return;
+  const user = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user });
 
+  if (!user) {
+    const empty = document.getElementById('savedEmpty');
+    if (empty) {
+      empty.innerHTML = `
+        <p class="font-label uppercase tracking-widest text-xs text-primary mb-4">Your saved places</p>
+        <p class="font-body text-on-surface-variant mb-6">Sign in to see the restaurants you've bookmarked.</p>
+        <a href="login" style="display:inline-block;background:#690008;color:#fff;padding:0.75rem 2rem;border-radius:9999px;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none">Sign in</a>
+      `.trim();
+      empty.classList.remove('hidden');
+    }
+    return;
+  }
+
   const token = getToken();
-  if (!token) return;
   const headers = { Authorization: `Bearer ${token}` };
 
   const grid = document.getElementById('savedGrid');

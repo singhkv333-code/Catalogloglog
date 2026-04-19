@@ -1,7 +1,7 @@
 // Lists page controller (new design)
 // PORT FROM OLD PROJECT: uses FastAPI list endpoints and the same JWT token in `localStorage.token`.
 
-import { requireAuth, getToken, logout } from './auth.js';
+import { fetchCurrentUser, getToken, logout, showSignInPrompt } from './auth.js';
 import { FASTAPI_BASE } from './config.js';
 
 function escapeHtml(value) {
@@ -40,6 +40,11 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
   accountBtn.style.visibility = 'visible';
+
+  if (!user) {
+    accountBtn.innerHTML = '<a href="login" style="text-decoration:none;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#690008">Sign in</a>';
+    return;
+  }
 
   const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
 
@@ -251,11 +256,12 @@ function renderListsSkeletonGrid(count = 6) {
 }
 
 async function loadLists({ token }) {
-  // PORT FROM OLD PROJECT
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
   const [mine, pub] = await Promise.all([
-    fetchJson(`${FASTAPI_BASE}/api/lists`, { headers }),
-    fetchJson(`${FASTAPI_BASE}/api/public-lists?limit=100`, { headers }),
+    token
+      ? fetchJson(`${FASTAPI_BASE}/api/lists`, { headers }).catch(() => ({ lists: [] }))
+      : Promise.resolve({ lists: [] }),
+    fetchJson(`${FASTAPI_BASE}/api/public-lists?limit=100`, { headers }).catch(() => ({ lists: [] })),
   ]);
   return {
     mine: Array.isArray(mine?.lists) ? mine.lists : [],
@@ -372,12 +378,10 @@ async function toggleSave({ token, listId, liked }) {
 }
 
 async function init() {
-  const user = await requireAuth({ redirectTo: 'login' });
-  if (!user) return;
+  const user = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user });
 
   const token = getToken();
-  if (!token) return;
 
   const grid = document.getElementById('listsGrid');
   const searchInput = document.getElementById('listSearchInput');
@@ -447,7 +451,12 @@ async function init() {
   toggle?.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-view]');
     if (!btn) return;
-    activeView = btn.dataset.view === 'mine' ? 'mine' : 'discover';
+    const next = btn.dataset.view === 'mine' ? 'mine' : 'discover';
+    if (next === 'mine' && !token) {
+      showSignInPrompt({ message: 'Sign in to see your lists.' });
+      return;
+    }
+    activeView = next;
     setToggleActive(activeView);
     render();
   });
@@ -458,6 +467,7 @@ async function init() {
   });
 
   createBtn?.addEventListener('click', () => {
+    if (!token) { showSignInPrompt({ message: 'Sign in to create a list.' }); return; }
     openCreateListModal({
       onCreate: async (payload) => {
         const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
@@ -472,6 +482,7 @@ async function init() {
     if (saveBtn) {
       e.preventDefault();
       e.stopPropagation();
+      if (!token) { showSignInPrompt({ message: 'Sign in to like lists.' }); return; }
       const listId = saveBtn.getAttribute('data-id');
       if (!listId) return;
       const target = publicLists.find((l) => String(l.id) === String(listId));

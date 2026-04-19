@@ -100,6 +100,50 @@ export async function requireAuth({ redirectTo = 'login' } = {}) {
   return fetchCurrentUser({ redirectOnFail: redirectTo });
 }
 
+// Show a non-redirecting sign-in prompt for action gating on open pages
+export function showSignInPrompt({ message = 'Sign in to continue.' } = {}) {
+  document.getElementById('catalog-signin-prompt')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'catalog-signin-prompt';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(29,27,23,0.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem';
+
+  const card = document.createElement('div');
+  card.style.cssText = 'background:#fef9f1;border-radius:1.25rem;padding:2rem;max-width:360px;width:100%;box-shadow:0 12px 40px rgba(29,27,23,0.18)';
+
+  const h = document.createElement('h2');
+  h.style.cssText = 'font-family:Newsreader,serif;font-style:italic;font-size:1.5rem;margin:0 0 0.5rem';
+  h.textContent = 'Sign in to continue';
+
+  const p = document.createElement('p');
+  p.style.cssText = 'font-family:Manrope,sans-serif;font-size:0.875rem;opacity:0.65;margin:0 0 1.5rem';
+  p.textContent = message;
+
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:0.75rem';
+
+  const signInBtn = document.createElement('a');
+  signInBtn.href = 'login';
+  signInBtn.style.cssText = 'flex:1;text-align:center;background:#690008;color:#fff;padding:0.75rem 1.5rem;border-radius:9999px;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;text-decoration:none';
+  signInBtn.textContent = 'Sign in';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.style.cssText = 'flex:1;background:#ece7e1;color:#1d1b17;padding:0.75rem 1.5rem;border-radius:9999px;border:none;cursor:pointer;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase';
+  cancelBtn.textContent = 'Cancel';
+
+  row.append(signInBtn, cancelBtn);
+  card.append(h, p, row);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+  cancelBtn.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  const onKey = (e) => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
+}
+
 // ─── JWT decode (kept for backwards compat) ───────────────────────────────────
 
 export function decodeJwtPayload(token = getToken()) {

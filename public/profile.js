@@ -2,7 +2,7 @@
 // PORT FROM OLD PROJECT: Express /profile + /api/users/:id/public + PUT /api/profile
 // PORT FROM OLD PROJECT: FastAPI /api/users/{id}/stats + /visits/recent + /reviews + friendship-status
 
-import { requireAuth, getToken, logout } from './auth.js';
+import { fetchCurrentUser, getToken, logout } from './auth.js';
 import { FASTAPI_BASE, EXPRESS_BASE } from './config.js';
 
 function cloudinaryResize(url, width = 400) {
@@ -38,6 +38,11 @@ function ensureAccountDropdown({ user }) {
   const accountBtn = document.getElementById('navAccountBtn');
   if (!accountBtn) return;
   accountBtn.style.visibility = 'visible';
+
+  if (!user) {
+    accountBtn.innerHTML = '<a href="login" style="text-decoration:none;font-family:Manrope,sans-serif;font-size:0.625rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#690008">Sign in</a>';
+    return;
+  }
 
   const initial = (user?.username || 'U')[0]?.toUpperCase?.() || 'U';
   accountBtn.setAttribute('aria-label', 'Account menu');
@@ -340,16 +345,20 @@ function openEditProfileModal({ token, user, onSaved }) {
 }
 
 async function init() {
-  const currentUser = await requireAuth({ redirectTo: 'login' });
-  if (!currentUser) return;
+  const currentUser = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user: currentUser });
 
   const token = getToken();
-  if (!token) return;
-  const headers = { Authorization: `Bearer ${token}` };
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const profileId = getProfileId(currentUser.id);
-  const isOwn = Number(profileId) === Number(currentUser.id);
+  const profileId = getProfileId(currentUser?.id ?? null);
+  if (!profileId) {
+    // No ?id in URL and no logged-in user — nothing to show
+    const nameEl = document.getElementById('heroName');
+    if (nameEl) nameEl.textContent = 'Sign in to view your profile';
+    return;
+  }
+  const isOwn = currentUser && Number(profileId) === Number(currentUser.id);
 
   // Clean URL for own profile
   if (isOwn) {
