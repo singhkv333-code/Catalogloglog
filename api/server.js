@@ -542,7 +542,7 @@ app.get('/profile', authMiddleware, async (req, res) => {
 })
 
 // ================== PUBLIC USER PROFILE ==================
-app.get('/api/users/:id/public', authMiddleware, async (req, res) => {
+app.get('/api/users/:id/public', async (req, res) => {
   const { id } = req.params
   try {
     const result = await pool.query(
@@ -587,14 +587,16 @@ app.get('/db-test', async (_req, res) => {
 
 // ================== RATING SUMMARY HELPER ==================
 async function updateRatingSummary(restaurantId) {
-  const stats = await pool.query(
-    `SELECT COALESCE(AVG(stars),0) AS avg_rating, COUNT(*) AS total_ratings FROM ratings WHERE restaurant_id=$1`,
-    [restaurantId]
-  )
-  const reviews = await pool.query(
-    `SELECT COUNT(*) AS total FROM reviews WHERE restaurant_id=$1`,
-    [restaurantId]
-  )
+  const [stats, reviews] = await Promise.all([
+    pool.query(
+      `SELECT COALESCE(AVG(stars),0) AS avg_rating, COUNT(*) AS total_ratings FROM ratings WHERE restaurant_id=$1`,
+      [restaurantId]
+    ),
+    pool.query(
+      `SELECT COUNT(*) AS total FROM reviews WHERE restaurant_id=$1`,
+      [restaurantId]
+    ),
+  ])
   const avg = parseFloat(parseFloat(stats.rows[0].avg_rating).toFixed(1))
   const total_ratings = parseInt(stats.rows[0].total_ratings)
   const total_reviews = parseInt(reviews.rows[0].total)
@@ -920,14 +922,16 @@ app.get('/api/reviews/:restaurantId', async (req, res) => {
     const idForms = [restaurantId]
     if (slugRes.rows.length) idForms.push(slugRes.rows[0].slug)
 
-    const r = await pool.query(
-      `SELECT r.id, r.user_id, r.content, r.rating, r.visit_date,
-              r.likes_count, r.is_edited, r.created_at, r.updated_at, u.username
-       FROM reviews r LEFT JOIN users u ON r.user_id=u.id
-       WHERE r.restaurant_id = ANY($1) ORDER BY r.created_at DESC LIMIT $2 OFFSET $3`,
-      [idForms, limit, offset]
-    )
-    const total = await pool.query(`SELECT COUNT(*) FROM reviews WHERE restaurant_id = ANY($1)`, [idForms])
+    const [r, total] = await Promise.all([
+      pool.query(
+        `SELECT r.id, r.user_id, r.content, r.rating, r.visit_date,
+                r.likes_count, r.is_edited, r.created_at, r.updated_at, u.username
+         FROM reviews r LEFT JOIN users u ON r.user_id=u.id
+         WHERE r.restaurant_id = ANY($1) ORDER BY r.created_at DESC LIMIT $2 OFFSET $3`,
+        [idForms, limit, offset]
+      ),
+      pool.query(`SELECT COUNT(*) FROM reviews WHERE restaurant_id = ANY($1)`, [idForms]),
+    ])
     const result = { reviews: r.rows, total: parseInt(total.rows[0].count), limit, offset }
     await cacheSet(cacheKey, result, TTL.REVIEWS_LIST)
     res.json(result)
@@ -1123,18 +1127,20 @@ app.get('/api/ratings/:restaurantId', async (req, res) => {
   const cached = await cacheGet(cacheKey)
   if (cached) return res.json(cached)
   try {
-    const dist = await pool.query(
-      `SELECT stars, COUNT(*) AS count FROM ratings WHERE restaurant_id=$1 GROUP BY stars ORDER BY stars DESC`,
-      [restaurantId]
-    )
-    const summary = await pool.query(
-      `SELECT average_rating, total_ratings, total_reviews FROM restaurant_ratings_summary WHERE restaurant_id=$1`,
-      [restaurantId]
-    )
-    const allRatings = await pool.query(
-      `SELECT id, stars, price_range FROM ratings WHERE restaurant_id=$1`,
-      [restaurantId]
-    )
+    const [dist, summary, allRatings] = await Promise.all([
+      pool.query(
+        `SELECT stars, COUNT(*) AS count FROM ratings WHERE restaurant_id=$1 GROUP BY stars ORDER BY stars DESC`,
+        [restaurantId]
+      ),
+      pool.query(
+        `SELECT average_rating, total_ratings, total_reviews FROM restaurant_ratings_summary WHERE restaurant_id=$1`,
+        [restaurantId]
+      ),
+      pool.query(
+        `SELECT id, stars, price_range FROM ratings WHERE restaurant_id=$1`,
+        [restaurantId]
+      ),
+    ])
     const distMap = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
     dist.rows.forEach(r => { distMap[r.stars] = parseInt(r.count) })
     const priced = allRatings.rows.filter(r => r.price_range)
@@ -1835,16 +1841,18 @@ app.get('/api/users/:userId/friendship-status', authMiddleware, async (req, res)
 app.get('/api/users/:userId/stats', authMiddleware, async (req, res) => {
   const { userId } = req.params
   try {
-    const friends = await pool.query(
-      `SELECT COUNT(*) AS cnt FROM friendships WHERE (requester_id=$1 OR addressee_id=$1) AND status='accepted'`,
-      [userId]
-    )
-    const visits = await pool.query(`SELECT COUNT(*) AS cnt FROM visits WHERE user_id=$1`, [userId])
     const today = new Date(); today.setDate(1)
-    const monthVisits = await pool.query(
-      `SELECT COUNT(*) AS cnt FROM visits WHERE user_id=$1 AND visited_at>=$2`,
-      [userId, today.toISOString().split('T')[0]]
-    )
+    const [friends, visits, monthVisits] = await Promise.all([
+      pool.query(
+        `SELECT COUNT(*) AS cnt FROM friendships WHERE (requester_id=$1 OR addressee_id=$1) AND status='accepted'`,
+        [userId]
+      ),
+      pool.query(`SELECT COUNT(*) AS cnt FROM visits WHERE user_id=$1`, [userId]),
+      pool.query(
+        `SELECT COUNT(*) AS cnt FROM visits WHERE user_id=$1 AND visited_at>=$2`,
+        [userId, today.toISOString().split('T')[0]]
+      ),
+    ])
     res.json({
       friend_count: parseInt(friends.rows[0].cnt),
       total_visits: parseInt(visits.rows[0].cnt),
