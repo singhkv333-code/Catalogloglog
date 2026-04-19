@@ -325,13 +325,18 @@ async function main() {
     loadingRatings = true;
     setMeta('Loading ratings…');
 
-    await mapWithConcurrency(need, 6, async (r) => {
-      try {
-        const d = await fetchJson(`${FASTAPI_BASE}/api/ratings/${encodeURIComponent(r.slug)}`);
-        ratingsCache.set(r.slug, d || { average_rating: 0, total_ratings: 0 });
-      } catch {
+    try {
+      const slugsParam = need.map((r) => r.slug).join(',');
+      const data = await fetchJson(
+        `${FASTAPI_BASE}/api/ratings/bulk?slugs=${encodeURIComponent(slugsParam)}`
+      );
+      Object.entries(data || {}).forEach(([slug, rating]) => ratingsCache.set(slug, rating));
+    } catch { /* ignore — fall back to zero */ }
+
+    // Fill any gaps so cards don't stay in loading state
+    need.forEach((r) => {
+      if (!ratingsCache.has(r.slug))
         ratingsCache.set(r.slug, { average_rating: 0, total_ratings: 0 });
-      }
     });
 
     loadingRatings = false;
@@ -409,7 +414,7 @@ async function main() {
     if (activeCuisine && activeCuisine !== 'all') params.set('cuisine', activeCuisine);
     if (sortMode && sortMode !== 'name') params.set('sort', sortMode);
     const qs = params.toString();
-    const next = qs ? `all-restaurants??${qs}` : 'all-restaurants';
+    const next = qs ? `all-restaurants?${qs}` : 'all-restaurants';
     window.history.replaceState({}, '', next);
   }
 

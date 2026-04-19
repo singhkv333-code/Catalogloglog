@@ -5,6 +5,32 @@ import { getSupabaseClient } from './supabase-client.js';
 
 const supabase = getSupabaseClient();
 
+// ─── User cache (sessionStorage, 5-min TTL) ──────────────────────────────────
+// Eliminates the supabase.auth.getUser() network round-trip + /api/me call on
+// every page navigation for authenticated users.
+
+const _USER_CACHE_KEY = '_cat_u1';
+const _USER_CACHE_TTL = 5 * 60 * 1000;
+
+function _readUserCache() {
+  try {
+    const raw = sessionStorage.getItem(_USER_CACHE_KEY);
+    if (!raw) return null;
+    const e = JSON.parse(raw);
+    if (!e || Date.now() > e.x) { sessionStorage.removeItem(_USER_CACHE_KEY); return null; }
+    return e.u;
+  } catch { return null; }
+}
+
+function _writeUserCache(user) {
+  try { sessionStorage.setItem(_USER_CACHE_KEY, JSON.stringify({ u: user, x: Date.now() + _USER_CACHE_TTL })); }
+  catch {}
+}
+
+function _clearUserCache() {
+  try { sessionStorage.removeItem(_USER_CACHE_KEY); } catch {}
+}
+
 // ─── Session helpers ──────────────────────────────────────────────────────────
 
 // Returns the current access token synchronously from Supabase's localStorage key.
@@ -39,6 +65,7 @@ export function clearAuthStorage() {
 }
 
 export async function logout(redirectTo = '/') {
+  _clearUserCache();
   await supabase.auth.signOut();
   clearAuthStorage();
   window.location.replace(redirectTo);
@@ -49,23 +76,30 @@ export async function logout(redirectTo = '/') {
 // Returns the current user, or null if not authenticated.
 // `id` is the integer DB primary key (not the Supabase UUID).
 // Pass redirectOnFail to auto-redirect unauthenticated visitors.
+//
+// Uses getSession() (reads localStorage — no network) instead of getUser()
+// (validates token with Supabase server). The token is still validated on every
+// authenticated API call server-side. Result is cached in sessionStorage for 5
+// minutes so repeat navigations skip the /api/me round-trip entirely.
 export async function fetchCurrentUser({ redirectOnFail = null } = {}) {
-  try {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error || !user) throw new Error('not_authenticated');
+  const cached = _readUserCache();
+  if (cached) return cached;
 
-    // Resolve the integer DB id via /api/me so API calls that use userId in the
-    // URL (e.g. /api/users/:userId/visits/recent) work correctly.
-    const token = getToken();
+  try {
+    // getSession() reads from localStorage — zero network latency
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('not_authenticated');
+    const user = session.user;
+    const token = session.access_token ?? getToken();
+
     let dbId = null;
     let dbUsername = user.user_metadata?.username ?? null;
     let dbName = user.user_metadata?.full_name ?? null;
     let dbBio = null;
+
     if (token) {
       try {
-        const resp = await fetch('/api/me', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const resp = await fetch('/api/me', { headers: { Authorization: `Bearer ${token}` } });
         if (resp.ok) {
           const me = await resp.json();
           dbId = me.id;
@@ -76,16 +110,17 @@ export async function fetchCurrentUser({ redirectOnFail = null } = {}) {
       } catch { /* ignore — server may not be running */ }
     }
 
-    const resolvedId = dbId ?? user.id;
-    return {
+    const resolved = {
       ...user,
-      id:         resolvedId,
+      id:         dbId ?? user.id,
       supabaseId: user.id,
       email:      user.email,
-      name:       dbName ?? user.user_metadata?.full_name ?? null,  // editable full name
-      username:   dbUsername,                                        // permanent handle
+      name:       dbName ?? user.user_metadata?.full_name ?? null,
+      username:   dbUsername,
       bio:        dbBio,
     };
+    _writeUserCache(resolved);
+    return resolved;
   } catch {
     if (redirectOnFail) {
       clearAuthStorage();

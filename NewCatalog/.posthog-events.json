@@ -1,0 +1,77 @@
+[
+  {
+    "event": "user_signed_up",
+    "description": "User initiated signup by submitting their email and password",
+    "file": "server.js"
+  },
+  {
+    "event": "account_email_verified",
+    "description": "User successfully verified their email with an OTP code",
+    "file": "server.js"
+  },
+  {
+    "event": "username_set",
+    "description": "User completed onboarding by setting their username after email verification",
+    "file": "server.js"
+  },
+  {
+    "event": "user_logged_in",
+    "description": "User successfully authenticated and received a session token",
+    "file": "server.js"
+  },
+  {
+    "event": "profile_updated",
+    "description": "User updated their bio or display name on their profile",
+    "file": "server.js"
+  },
+  {
+    "event": "review_created",
+    "description": "User submitted a review for a restaurant",
+    "file": "server.js"
+  },
+  {
+    "event": "restaurant_rated",
+    "description": "User rated a restaurant with a star rating",
+    "file": "server.js"
+  },
+  {
+    "event": "restaurant_bookmarked",
+    "description": "User saved a restaurant to their wishlist",
+    "file": "server.js"
+  },
+  {
+    "event": "restaurant_unbookmarked",
+    "description": "User removed a restaurant from their wishlist",
+    "file": "server.js"
+  },
+  {
+    "event": "restaurant_visit_recorded",
+    "description": "User marked a restaurant as visited (been here)",
+    "file": "server.js"
+  },
+  {
+    "event": "list_created",
+    "description": "User created a new restaurant list",
+    "file": "server.js"
+  },
+  {
+    "event": "list_deleted",
+    "description": "User deleted one of their restaurant lists",
+    "file": "server.js"
+  },
+  {
+    "event": "list_item_added",
+    "description": "User added a restaurant to one of their lists",
+    "file": "server.js"
+  },
+  {
+    "event": "list_liked",
+    "description": "User liked/saved a public list from another user",
+    "file": "server.js"
+  },
+  {
+    "event": "friend_request_sent",
+    "description": "User sent a friend request to another user",
+    "file": "server.js"
+  }
+]

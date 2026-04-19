@@ -1220,7 +1220,12 @@ async function main() {
   if (!indexMain || !postMain || !postView) { finishProgress(); return; }
 
   const params = new URLSearchParams(window.location.search);
-  const slug = params.get('slug');
+  let slug = params.get('slug');
+  // Also support clean /blog/:slug path format
+  if (!slug) {
+    const match = window.location.pathname.match(/\/blog\/([^/]+)/);
+    if (match) slug = decodeURIComponent(match[1]);
+  }
 
   // ── Individual post view ──────────────────────────────────────────────
   if (slug) {

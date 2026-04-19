@@ -871,76 +871,77 @@ async function hydrateFriendsBeenHere({ token, slug }) {
 
 async function init() {
   startProgress();
-  const user = await fetchCurrentUser({ redirectOnFail: null });
+
+  const slug = getSlug();
+  if (!slug) {
+    document.getElementById(‘restaurantName’).textContent = ‘Restaurant not found’;
+    return;
+  }
+
+  // Show skeletons immediately — before any network calls
+  const nameEl = document.getElementById(‘restaurantName’);
+  const metaEl = document.getElementById(‘restaurantMeta’);
+  const avgEl = document.getElementById(‘ratingAvg’);
+  const countEl = document.getElementById(‘ratingCount’);
+  [nameEl, metaEl, avgEl, countEl].forEach((el) => {
+    if (!el) return;
+    el.classList.add(‘catalog-skeleton’, ‘rounded’);
+  });
+  if (nameEl) {
+    nameEl.textContent = ‘’;
+    nameEl.style.display = ‘inline-block’;
+    nameEl.style.minWidth = ‘280px’;
+    nameEl.style.minHeight = ‘64px’;
+  }
+  if (metaEl) {
+    metaEl.textContent = ‘’;
+    metaEl.style.display = ‘block’;
+    metaEl.style.maxWidth = ‘520px’;
+    metaEl.style.minHeight = ‘18px’;
+  }
+  if (avgEl) {
+    avgEl.textContent = ‘’;
+    avgEl.style.display = ‘inline-block’;
+    avgEl.style.minWidth = ‘88px’;
+    avgEl.style.minHeight = ‘52px’;
+  }
+  if (countEl) {
+    countEl.textContent = ‘’;
+    countEl.style.display = ‘block’;
+    countEl.style.minWidth = ‘120px’;
+    countEl.style.minHeight = ‘14px’;
+  }
+
+  // Auth and restaurant data fetch run in parallel — neither blocks the other
+  const [user, restaurantOrError] = await Promise.all([
+    fetchCurrentUser({ redirectOnFail: null }),
+    fetchJson(`${FASTAPI_BASE}/restaurants/${encodeURIComponent(slug)}`).catch((e) => ({ _err: e })),
+  ]);
+
   ensureAccountDropdown({ user });
 
   const token = getToken();
 
-  const slug = getSlug();
-  if (!slug) {
-    document.getElementById('restaurantName').textContent = 'Restaurant not found';
-    return;
-  }
-
-  // Skeletons for hero + rating while restaurant data loads
-  const nameEl = document.getElementById('restaurantName');
-  const metaEl = document.getElementById('restaurantMeta');
-  const avgEl = document.getElementById('ratingAvg');
-  const countEl = document.getElementById('ratingCount');
-  [nameEl, metaEl, avgEl, countEl].forEach((el) => {
-    if (!el) return;
-    el.classList.add('catalog-skeleton', 'rounded');
-  });
-  if (nameEl) {
-    nameEl.textContent = '';
-    nameEl.style.display = 'inline-block';
-    nameEl.style.minWidth = '280px';
-    nameEl.style.minHeight = '64px';
-  }
-  if (metaEl) {
-    metaEl.textContent = '';
-    metaEl.style.display = 'block';
-    metaEl.style.maxWidth = '520px';
-    metaEl.style.minHeight = '18px';
-  }
-  if (avgEl) {
-    avgEl.textContent = '';
-    avgEl.style.display = 'inline-block';
-    avgEl.style.minWidth = '88px';
-    avgEl.style.minHeight = '52px';
-  }
-  if (countEl) {
-    countEl.textContent = '';
-    countEl.style.display = 'block';
-    countEl.style.minWidth = '120px';
-    countEl.style.minHeight = '14px';
-  }
-
-  // Load restaurant details
-  let restaurant;
-  try {
-    restaurant = await fetchJson(`${FASTAPI_BASE}/restaurants/${encodeURIComponent(slug)}`);
-  } catch (ex) {
-    // Ensure skeleton styles don’t hide the error state.
+  if (restaurantOrError?._err) {
+    const ex = restaurantOrError._err;
     [nameEl, metaEl, avgEl, countEl].forEach((el) => {
       if (!el) return;
-      el.classList.remove('catalog-skeleton', 'rounded');
-      el.style.minWidth = '';
-      el.style.minHeight = '';
-      el.style.maxWidth = '';
-      el.style.display = '';
+      el.classList.remove(‘catalog-skeleton’, ‘rounded’);
+      el.style.minWidth = ‘’;
+      el.style.minHeight = ‘’;
+      el.style.maxWidth = ‘’;
+      el.style.display = ‘’;
     });
-
-    const msg = ex?.message || 'Failed to load restaurant.';
+    const msg = ex?.message || ‘Failed to load restaurant.’;
     const statusHint =
-      /404/.test(msg) || /not found/i.test(msg) ? 'Restaurant not found' : 'Failed to load restaurant';
-
-    document.getElementById('restaurantName').textContent = statusHint;
-    const meta = document.getElementById('restaurantMeta');
+      /404/.test(msg) || /not found/i.test(msg) ? ‘Restaurant not found’ : ‘Failed to load restaurant’;
+    document.getElementById(‘restaurantName’).textContent = statusHint;
+    const meta = document.getElementById(‘restaurantMeta’);
     if (meta) meta.textContent = msg;
     return;
   }
 
+  const restaurant = restaurantOrError;
   finishProgress();
 
   // Use the integer primary key for all operational API calls (visits, bookmarks,
@@ -1181,8 +1182,6 @@ async function init() {
     });
   }
 
-  await refreshRatings();
-
   // Reviews
   const reviewsList = document.getElementById('reviewsList');
   const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
@@ -1356,7 +1355,8 @@ async function init() {
     else loadMoreBtn.classList.add('hidden');
   }
 
-  await loadReviews({ reset: true });
+  // Ratings and first page of reviews load in parallel
+  await Promise.all([refreshRatings(), loadReviews({ reset: true })]);
 
   reviewsList?.addEventListener('click', async (e) => {
     const btn = e.target?.closest?.('button[data-action]');

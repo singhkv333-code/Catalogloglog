@@ -421,7 +421,7 @@ function setupHomeSearch() {
     if (e.key === 'Enter') {
       const q = input.value.trim();
       window.location.href = q
-        ? `all-restaurants??search=${encodeURIComponent(q)}`
+        ? `all-restaurants?search=${encodeURIComponent(q)}`
         : 'all-restaurants';
     }
   });
@@ -429,7 +429,7 @@ function setupHomeSearch() {
   searchBtn?.addEventListener('click', () => {
     const q = input.value.trim();
     window.location.href = q
-      ? `all-restaurants??search=${encodeURIComponent(q)}`
+      ? `all-restaurants?search=${encodeURIComponent(q)}`
       : 'all-restaurants';
   });
 

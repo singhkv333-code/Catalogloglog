@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /login
+Disallow: /signup
+Disallow: /been
+Disallow: /saved
+Disallow: /friends
+Disallow: /notifications
+Disallow: /settings
+Disallow: /api/
+
+Sitemap: https://www.catalogapp.in/sitemap.xml

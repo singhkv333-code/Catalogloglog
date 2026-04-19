@@ -1109,6 +1109,42 @@ app.delete('/api/reviews/:reviewId/replies/:replyId', authMiddleware, async (req
 // RATINGS
 // ============================================================
 
+// Bulk ratings — single query replaces N separate /api/ratings/:slug calls from
+// the all-restaurants page when sorting by rating.
+app.get('/api/ratings/bulk', async (req, res) => {
+  const raw = String(req.query.slugs || '').trim()
+  if (!raw) return res.json({})
+  const slugs = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean).slice(0, 100)
+  if (!slugs.length) return res.json({})
+
+  const cacheKey = `ratings:bulk:${[...slugs].sort().join(',')}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
+
+  try {
+    const r = await pool.query(
+      `SELECT LOWER(REPLACE(rs.name,' ','-')) AS slug,
+              COALESCE(s.average_rating, 0) AS average_rating,
+              COALESCE(s.total_ratings, 0)  AS total_ratings,
+              COALESCE(s.total_reviews, 0)  AS total_reviews
+       FROM restaurants rs
+       LEFT JOIN restaurant_ratings_summary s ON s.restaurant_id = rs.id::text
+       WHERE LOWER(REPLACE(rs.name,' ','-')) = ANY($1)`,
+      [slugs]
+    )
+    const result = {}
+    r.rows.forEach(row => {
+      result[row.slug] = {
+        average_rating: Number(row.average_rating),
+        total_ratings:  Number(row.total_ratings),
+        total_reviews:  Number(row.total_reviews),
+      }
+    })
+    await cacheSet(cacheKey, result, TTL.RATINGS_SUMMARY)
+    res.json(result)
+  } catch (err) { res.status(500).json({ message: err.message }) }
+})
+
 app.get('/api/ratings/:restaurantId/user', authMiddleware, async (req, res) => {
   const { restaurantId } = req.params
   try {
