@@ -143,7 +143,7 @@ function normalizeRestaurant(r) {
 }
 
 function restaurantCardHtml(r, rating) {
-  const href = r.slug ? `restaurant?slug=${encodeURIComponent(r.slug)}` : 'restaurant';
+  const href = r.slug ? `/restaurant/${r.slug}` : '/all-restaurants';
   const meta = [primaryCuisineLabel(r.cuisine), r.area].filter(Boolean).join(' · ');
   const ratingVal = rating?.total_ratings
     ? Number(rating.average_rating || 0).toFixed(1)

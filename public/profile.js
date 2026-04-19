@@ -151,7 +151,7 @@ function formatWhen(value) {
 
 function renderRestaurantTile(v, { showWhen = false } = {}) {
   const slug = v?.slug || v?.restaurant_id || '';
-  const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
+  const href = slug ? `/restaurant/${slug}` : '/all-restaurants';
   const imgUrl = cloudinaryResize(v?.image_url || v?.images?.[0] || '', 400);
   const when = showWhen ? formatWhen(v?.visited_at || v?.added_at) : '';
   return `
@@ -178,7 +178,7 @@ function renderRestaurantTile(v, { showWhen = false } = {}) {
 
 function renderSavedRow(b) {
   const slug = b?.slug || b?.restaurant_id || '';
-  const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
+  const href = slug ? `/restaurant/${slug}` : '/all-restaurants';
   const imgUrl = cloudinaryResize(b?.image_url || b?.images?.[0] || '', 400);
   const when = formatWhen(b?.added_at);
   return `
@@ -241,7 +241,7 @@ function renderListCard(l) {
 
 function renderUserReviewCard(r) {
   const slug = r?.slug || r?.restaurant_id || '';
-  const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
+  const href = slug ? `/restaurant/${slug}` : '/all-restaurants';
   const stars = r?.rating ? Number(r.rating) : null;
   const starsText = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
   const when = r?.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '';

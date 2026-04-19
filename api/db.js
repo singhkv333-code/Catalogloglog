@@ -23,9 +23,9 @@ function resolveSslOption() {
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: resolveSslOption(),
-  max: 3,
-  idleTimeoutMillis: 20000,      // release idle connections after 20s
-  connectionTimeoutMillis: 5000, // fail fast rather than queue forever
+  max: 1,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 5000,
 })
 
 module.exports = pool

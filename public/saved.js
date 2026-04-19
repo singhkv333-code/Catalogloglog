@@ -146,7 +146,7 @@ function renderRowCard(b) {
   const storedId = String(b?.restaurant_id || '');
   // nameSlug is for page navigation only — derived from the restaurant name
   const nameSlug = b?.slug || (b?.name ? b.name.toLowerCase().replace(/\s+/g, '-') : storedId);
-  const href = nameSlug ? `restaurant?slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
+  const href = nameSlug ? `/restaurant/${nameSlug}` : '/all-restaurants';
   const imgUrl = cloudinaryResize(b?.image_url || b?.images?.[0] || '', 400);
   const when = formatWhen(b?.added_at);
 

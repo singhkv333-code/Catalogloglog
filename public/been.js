@@ -131,7 +131,7 @@ function renderCard(v) {
   const storedId = String(v?.restaurant_id || '');
   // nameSlug is for page navigation only — computed from name or from the slug field the server returns
   const nameSlug = v?.slug || (v?.name ? v.name.toLowerCase().replace(/\s+/g, '-') : storedId);
-  const href = nameSlug ? `restaurant?slug=${encodeURIComponent(nameSlug)}` : 'restaurant';
+  const href = nameSlug ? `/restaurant/${nameSlug}` : '/all-restaurants';
   const imgUrl = cloudinaryResize(v?.image_url || v?.images?.[0] || '', 400);
   const rating = Number(v?.user_rating ?? 0) || 0;
   const when = formatWhen(v?.visited_at);

@@ -118,7 +118,7 @@ function renderItemCard(item, { isOwner } = {}) {
   const name = item?.name || 'Restaurant';
   const meta = [item?.cuisine, item?.area].filter(Boolean).join(' • ');
   const imgUrl = item?.image_url || (Array.isArray(item?.images) ? item.images[0] : '');
-  const href = slug ? `restaurant?slug=${encodeURIComponent(slug)}` : 'restaurant';
+  const href = slug ? `/restaurant/${slug}` : '/all-restaurants';
 
   const removeBtn = isOwner
     ? `<button class="absolute top-4 left-4 bg-surface/90 backdrop-blur px-3 py-1 rounded-full font-label tracking-widest font-bold text-[10px] hover:bg-surface-container-lowest transition-colors" type="button" data-action="remove-item" data-item-id="${escapeHtml(

@@ -180,7 +180,7 @@ function hydratePopularCardFeature(cardEl, restaurant) {
   const badge = cardEl.querySelector('span.bg-primary-container');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
+  const clickUrl = `/restaurant/${slug}`;
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -219,7 +219,7 @@ function hydratePopularCardSmall(cardEl, restaurant) {
   const meta = cardEl.querySelector('p');
 
   const slug = restaurant.slug || restaurant.id || '';
-  const clickUrl = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
+  const clickUrl = `/restaurant/${slug}`;
 
   cardEl.style.cursor = 'pointer';
   cardEl.onclick = () => {
@@ -354,7 +354,7 @@ function setupHomeSearch() {
     list.forEach((r) => {
       const slug = r.slug || r.id || '';
       const a = document.createElement('a');
-      a.href = pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`);
+      a.href = `/restaurant/${slug}`;
       a.className =
         'flex items-center gap-4 p-3 rounded-xl hover:bg-surface-container-low transition-colors w-full text-left';
 
@@ -755,7 +755,7 @@ async function hydrateFriendActivity({ token, activity: prefetched } = {}) {
 
     const slug = item?.slug || '';
     const href = slug
-      ? pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`)
+      ? `/restaurant/${slug}`
       : pageUrl('restaurant');
 
     const target = cardSlots[idx];
@@ -888,7 +888,7 @@ async function hydrateRecentlyVisited({ token, userId, visits: prefetched } = {}
     const v = list[i];
     const slug = v?.slug || v?.restaurant_id || '';
     const href = slug
-      ? pageUrl(`restaurant?slug=${encodeURIComponent(slug)}`)
+      ? `/restaurant/${slug}`
       : pageUrl('restaurant');
     card.style.cursor = 'pointer';
     card.onclick = () => {

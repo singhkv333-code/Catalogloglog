@@ -215,7 +215,7 @@ function renderActivityCard(a) {
   const starsText = stars ? '★'.repeat(Math.round(stars)) + '☆'.repeat(5 - Math.round(stars)) : '';
 
   const friendHref = `profile?id=${encodeURIComponent(friendId)}`;
-  const restHref = `restaurant?slug=${encodeURIComponent(restSlug)}`;
+  const restHref = `/restaurant/${restSlug}`;
 
   return `
     <div class="bg-surface-container-lowest rounded-xl editorial-shadow p-7">

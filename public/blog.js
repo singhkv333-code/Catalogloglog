@@ -79,7 +79,7 @@ function linkifyRestaurants(escapedText, restaurants) {
     const esc = escapeHtml(name); // match against already-escaped paragraph content
     const key = esc.toLowerCase();
     if (!esc || nameToLink.has(key)) continue;
-    const href = `restaurant?slug=${encodeURIComponent(slug)}`;
+    const href = `/restaurant/${slug}`;
     nameToLink.set(key, `<a href="${href}" class="catalog-restaurant-link">${esc}</a>`);
     patterns.push(esc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   }
