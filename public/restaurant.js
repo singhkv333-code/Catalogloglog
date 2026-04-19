@@ -11,7 +11,7 @@ window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = true;
 function cloudinaryResize(url, width = 400) {
   const str = String(url || '').trim();
   if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
-  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+  return str.replace('/image/upload/', `/image/upload/w_${width * 2 > 1200 ? 1200 : width * 2},c_limit,q_auto:best,f_auto/`);
 }
 
 function escapeHtml(value) {
@@ -123,7 +123,11 @@ function ensureAccountDropdown({ user }) {
 
 function getSlug() {
   const params = new URLSearchParams(window.location.search);
-  return (params.get('slug') || '').trim();
+  const fromQuery = (params.get('slug') || '').trim();
+  if (fromQuery) return fromQuery;
+  // Also support clean /restaurant/:slug path format
+  const match = window.location.pathname.match(/\/restaurant\/([^/]+)/);
+  return match ? decodeURIComponent(match[1]).trim() : '';
 }
 
 function setBtnActive(btn, active, { activeLabel, inactiveLabel } = {}) {

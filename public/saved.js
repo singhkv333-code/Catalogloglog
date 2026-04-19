@@ -10,7 +10,7 @@ import { FASTAPI_BASE } from './config.js';
 function cloudinaryResize(url, width = 400) {
   const str = String(url || '').trim();
   if (!str || !str.includes('res.cloudinary.com') || !str.includes('/image/upload/')) return str;
-  return str.replace('/image/upload/', `/image/upload/w_${width},c_fill,q_auto,f_auto/`);
+  return str.replace('/image/upload/', `/image/upload/w_${width * 2 > 1200 ? 1200 : width * 2},c_limit,q_auto:best,f_auto/`);
 }
 
 function escapeHtml(value) {
