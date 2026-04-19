@@ -327,29 +327,6 @@
       </div>
     </footer>
 
-    <script>
-      // If the module script fails to load (404, wrong static dir, etc.), don't leave the page stuck on "Loading…".
-      // `restaurant.js` sets these globals when it loads/runs.
-      window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = false;
-      window.__CATALOG_RESTAURANT_INIT_DONE__ = false;
-      setTimeout(function () {
-        if (window.__CATALOG_RESTAURANT_INIT_DONE__) return;
-        var nameEl = document.getElementById('restaurantName');
-        var metaEl = document.getElementById('restaurantMeta');
-        if (nameEl && !window.__CATALOG_RESTAURANT_INIT_DONE__) {
-          nameEl.classList.remove('catalog-skeleton', 'rounded');
-          nameEl.style.minWidth = '';
-          nameEl.style.minHeight = '';
-          nameEl.style.display = '';
-          nameEl.textContent = window.__CATALOG_RESTAURANT_SCRIPT_LOADED__
-            ? 'Still loading…'
-            : 'Failed to load page scripts';
-        }
-        if (metaEl && !window.__CATALOG_RESTAURANT_SCRIPT_LOADED__) {
-          metaEl.textContent = 'If you are running the app via Express, make sure it serves the New Catalog folder.';
-        }
-      }, 2500);
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
     <script type="module" src="./restaurant.js"></script>
   </body>

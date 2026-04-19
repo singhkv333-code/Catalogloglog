@@ -5,8 +5,6 @@ import { fetchCurrentUser, getToken, logout, showSignInPrompt } from './auth.js'
 import { FASTAPI_BASE } from './config.js';
 import { startProgress, finishProgress } from './progress.js';
 
-// Used by `restaurant?` to detect whether the module script loaded at all.
-window.__CATALOG_RESTAURANT_SCRIPT_LOADED__ = true;
 
 function cloudinaryResize(url, width = 400) {
   const str = String(url || '').trim();
@@ -873,7 +871,6 @@ async function hydrateFriendsBeenHere({ token, slug }) {
 
 async function init() {
   startProgress();
-  window.__CATALOG_RESTAURANT_INIT_STARTED__ = true;
   const user = await fetchCurrentUser({ redirectOnFail: null });
   ensureAccountDropdown({ user });
 
@@ -1915,7 +1912,6 @@ async function init() {
     }
   });
 
-  window.__CATALOG_RESTAURANT_INIT_DONE__ = true;
 }
 
 if (document.readyState === 'loading') {
