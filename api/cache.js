@@ -71,11 +71,18 @@ const TTL = {
   RESTAURANTS_RANDOM:   60,        // 60 s   — random data, short TTL is fine
   RESTAURANTS_LIST:     3 * 60,   // 3 min  — search results, rarely stale
   RESTAURANT_DETAIL:    10 * 60,  // 10 min — static-ish restaurant data
+  RESTAURANTS_SLIM:     30 * 60,  // 30 min — id/name/area/cuisine/image_url/slug only (~500KB)
   REVIEWS_LIST:         2 * 60,   // 2 min  — new reviews appear frequently
   RATINGS_SUMMARY:      3 * 60,   // 3 min  — invalidated on every rating write anyway
   LISTS_PUBLIC:         2 * 60,   // 2 min  — likes/item counts change
   LIST_DETAIL:          5 * 60,   // 5 min  — individual list page
   REPLIES:              3 * 60,   // 3 min  — replies are infrequent
+  BOOKMARKS_USER:       5 * 60,   // 5 min  — saved page, invalidated on add/remove
+  VISITS_USER:          5 * 60,   // 5 min  — been page, invalidated on add/remove
+  FRIENDS_LIST:         10 * 60,  // 10 min — friend list rarely changes, invalidated on accept/remove
+  FRIENDS_REQUESTS:     2 * 60,   // 2 min  — incoming requests, invalidated on accept/decline
+  FRIENDS_ACTIVITY:     3 * 60,   // 3 min  — feed, short TTL is fine (friend writes hard to track)
+  HOME_USER:            3 * 60,   // 3 min  — user-specific home section, invalidated on visit add/remove
 }
 
 module.exports = { cacheGet, cacheSet, cacheDel, cacheDelPattern, TTL }

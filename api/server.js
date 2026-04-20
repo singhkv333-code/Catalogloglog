@@ -342,62 +342,63 @@ app.get('/api/home-data', optionalAuth, async (req, res) => {
       )
     ])
     popular = popularResult.rows
-    const listsWithPreviews = await Promise.all(listsResult.rows.map(async lst => {
-      const prev = await pool.query(
-        `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
-         WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
-        [lst.id]
-      )
-      return {
-        id: lst.id, title: lst.title, description: lst.description,
-        owner_id: lst.user_id, owner_username: lst.owner_username,
-        item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
-        liked_by_user: false, preview_restaurants: prev.rows
-      }
+    const previews = await batchListPreviews(listsResult.rows.map(l => l.id))
+    lists = listsResult.rows.map(lst => ({
+      id: lst.id, title: lst.title, description: lst.description,
+      owner_id: lst.user_id, owner_username: lst.owner_username,
+      item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
+      liked_by_user: false, preview_restaurants: previews[lst.id] || []
     }))
-    lists = listsWithPreviews
     await cacheSet(publicCacheKey, { popular, lists }, 5 * 60)
   }
 
   let activity = [], recent = [], user = null
   if (uid) {
-    const [activityResult, recentResult, userResult] = await Promise.all([
-      pool.query(
-        `SELECT v.id AS visit_id, v.restaurant_id, v.visited_at,
-                u.id AS friend_id, u.username AS friend_username, u.name AS friend_name,
-                rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine AS restaurant_cuisine, rs.image_url,
-                LOWER(REPLACE(rs.name,' ','-')) AS slug,
-                rat.stars, rev.content AS review_snippet
-         FROM visits v JOIN users u ON v.user_id=u.id
-         LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
-         LEFT JOIN ratings rat ON rat.user_id=v.user_id AND rat.restaurant_id=v.restaurant_id
-         LEFT JOIN reviews rev ON rev.user_id=v.user_id AND rev.restaurant_id=v.restaurant_id
-         WHERE v.user_id IN (
-           SELECT CASE WHEN requester_id=$1 THEN addressee_id ELSE requester_id END
-           FROM friendships WHERE (requester_id=$1 OR addressee_id=$1) AND status='accepted'
-         )
-         ORDER BY v.visited_at DESC LIMIT 3`,
-        [uid]
-      ),
-      pool.query(
-        `SELECT v.restaurant_id, LOWER(REPLACE(rs.name,' ','-')) AS slug,
-                rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
-                COALESCE(rat.stars, 0) AS user_rating
-         FROM visits v
-         LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
-         LEFT JOIN ratings rat ON rat.restaurant_id=v.restaurant_id AND rat.user_id=$1
-         WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT 8`,
-        [uid]
-      ),
-      pool.query('SELECT id, email, username, name, bio FROM users WHERE id=$1', [uid])
-    ])
-    activity = activityResult.rows.map(a => ({
-      ...a, review_snippet: a.review_snippet && a.review_snippet.length > 120
-        ? a.review_snippet.slice(0, 120) + '…' : a.review_snippet
-    }))
-    recent = recentResult.rows
-    user = userResult.rows[0] || null
+    const userCacheKey = `home:user:${uid}`
+    const cachedUser = await cacheGet(userCacheKey)
+    if (cachedUser) {
+      activity = cachedUser.activity
+      recent = cachedUser.recent
+      user = cachedUser.user
+    } else {
+      const [activityResult, recentResult, userResult] = await Promise.all([
+        pool.query(
+          `SELECT v.id AS visit_id, v.restaurant_id, v.visited_at,
+                  u.id AS friend_id, u.username AS friend_username, u.name AS friend_name,
+                  rs.name AS restaurant_name, rs.area AS restaurant_area, rs.cuisine AS restaurant_cuisine, rs.image_url,
+                  LOWER(REPLACE(rs.name,' ','-')) AS slug,
+                  rat.stars, rev.content AS review_snippet
+           FROM visits v JOIN users u ON v.user_id=u.id
+           LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
+           LEFT JOIN ratings rat ON rat.user_id=v.user_id AND rat.restaurant_id=v.restaurant_id
+           LEFT JOIN reviews rev ON rev.user_id=v.user_id AND rev.restaurant_id=v.restaurant_id
+           WHERE v.user_id IN (
+             SELECT CASE WHEN requester_id=$1 THEN addressee_id ELSE requester_id END
+             FROM friendships WHERE (requester_id=$1 OR addressee_id=$1) AND status='accepted'
+           )
+           ORDER BY v.visited_at DESC LIMIT 3`,
+          [uid]
+        ),
+        pool.query(
+          `SELECT v.restaurant_id, LOWER(REPLACE(rs.name,' ','-')) AS slug,
+                  rs.name, rs.area, rs.cuisine, rs.image_url, v.visited_at,
+                  COALESCE(rat.stars, 0) AS user_rating
+           FROM visits v
+           LEFT JOIN restaurants rs ON (rs.id::text = v.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = v.restaurant_id)
+           LEFT JOIN ratings rat ON rat.restaurant_id=v.restaurant_id AND rat.user_id=$1
+           WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT 8`,
+          [uid]
+        ),
+        pool.query('SELECT id, email, username, name, bio FROM users WHERE id=$1', [uid])
+      ])
+      activity = activityResult.rows.map(a => ({
+        ...a, review_snippet: a.review_snippet && a.review_snippet.length > 120
+          ? a.review_snippet.slice(0, 120) + '…' : a.review_snippet
+      }))
+      recent = recentResult.rows
+      user = userResult.rows[0] || null
+      await cacheSet(userCacheKey, { activity, recent, user }, TTL.HOME_USER)
+    }
   }
 
   res.json({ popular, lists, activity, recent, user })
@@ -613,6 +614,50 @@ async function updateRatingSummary(restaurantId) {
     cacheDelPattern('restaurants:popular:*'),
   ])
   return { average_rating: avg, total_ratings, total_reviews }
+}
+
+// ================== SLIM RESTAURANT CACHE ==================
+// In-process L1 cache — reused across warm invocations of the same serverless instance.
+let _slimCache = null
+let _slimCacheAt = 0
+
+async function getSlimRestaurants() {
+  const now = Date.now()
+  if (_slimCache && now - _slimCacheAt < 5 * 60 * 1000) return _slimCache
+  const cached = await cacheGet('restaurants:slim')
+  if (cached) { _slimCache = cached; _slimCacheAt = now; return cached }
+  const r = await pool.query(
+    `SELECT id, name, area, cuisine, image_url, LOWER(REPLACE(name,' ','-')) AS slug
+     FROM restaurants WHERE name IS NOT NULL AND image_url IS NOT NULL AND image_url != ''`
+  )
+  _slimCache = r.rows; _slimCacheAt = now
+  await cacheSet('restaurants:slim', r.rows, TTL.RESTAURANTS_SLIM)
+  return r.rows
+}
+
+// Replaces N separate per-list preview queries with 1 list_items query + slim cache lookup.
+// Returns a map of listId → [{ name, image_url, slug }, ...]
+async function batchListPreviews(listIds) {
+  if (!listIds.length) return {}
+  const slim = await getSlimRestaurants()
+  const byId = {}, bySlug = {}
+  slim.forEach(r => { byId[String(r.id)] = r; bySlug[r.slug] = r })
+
+  const r = await pool.query(
+    `SELECT list_id, restaurant_id, position FROM list_items
+     WHERE list_id = ANY($1) ORDER BY list_id, position ASC`,
+    [listIds]
+  )
+  const out = {}
+  for (const row of r.rows) {
+    const rest = byId[row.restaurant_id] || bySlug[row.restaurant_id]
+    if (!rest) continue
+    if (!out[row.list_id]) out[row.list_id] = []
+    if (out[row.list_id].length < 3) {
+      out[row.list_id].push({ name: rest.name, image_url: rest.image_url, slug: rest.slug })
+    }
+  }
+  return out
 }
 
 // ================== OPTIONAL AUTH ==================
@@ -1219,6 +1264,9 @@ app.delete('/api/ratings/:restaurantId', authMiddleware, async (req, res) => {
 // ============================================================
 
 app.get('/api/users/bookmarks', authMiddleware, async (req, res) => {
+  const cacheKey = `bookmarks:user:${req.user.id}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT w.id, w.restaurant_id, w.added_at, rs.name, rs.area, rs.cuisine, rs.image_url,
@@ -1228,7 +1276,9 @@ app.get('/api/users/bookmarks', authMiddleware, async (req, res) => {
       [req.user.id]
     )
     const bookmarks = r.rows.map(b => ({ ...b, images: b.image_url ? [b.image_url] : [] }))
-    res.json({ bookmarks, total: bookmarks.length })
+    const result = { bookmarks, total: bookmarks.length }
+    await cacheSet(cacheKey, result, TTL.BOOKMARKS_USER)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -1247,6 +1297,7 @@ app.post('/api/bookmarks/:restaurantId', authMiddleware, async (req, res) => {
       `INSERT INTO wishlist (user_id, restaurant_id, added_at) VALUES ($1,$2,NOW()) ON CONFLICT DO NOTHING`,
       [req.user.id, restaurantId]
     )
+    await cacheDel(`bookmarks:user:${req.user.id}`)
     res.json({ success: true, message: 'Bookmark added' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1256,6 +1307,7 @@ app.delete('/api/bookmarks/:restaurantId', authMiddleware, async (req, res) => {
   try {
     const r = await pool.query(`DELETE FROM wishlist WHERE user_id=$1 AND restaurant_id=$2`, [req.user.id, restaurantId])
     if (r.rowCount === 0) return res.status(404).json({ message: 'Bookmark not found' })
+    await cacheDel(`bookmarks:user:${req.user.id}`)
     res.json({ success: true, message: 'Bookmark removed' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1282,6 +1334,10 @@ app.post('/api/visits/:restaurantId', authMiddleware, async (req, res) => {
       `INSERT INTO visits (user_id, restaurant_id, visited_at, created_at) VALUES ($1,$2,NOW(),NOW())`,
       [req.user.id, restaurantId]
     )
+    await Promise.all([
+      cacheDelPattern(`visits:user:${req.user.id}:*`),
+      cacheDel(`home:user:${req.user.id}`),
+    ])
     res.json({ success: true, message: 'Visit recorded' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1290,6 +1346,10 @@ app.delete('/api/visits/:restaurantId', authMiddleware, async (req, res) => {
   const { restaurantId } = req.params
   try {
     await pool.query(`DELETE FROM visits WHERE user_id=$1 AND restaurant_id=$2`, [req.user.id, restaurantId])
+    await Promise.all([
+      cacheDelPattern(`visits:user:${req.user.id}:*`),
+      cacheDel(`home:user:${req.user.id}`),
+    ])
     console.log(`[SYNC] Removed been for restaurant ${restaurantId} user ${req.user.id}`)
     try {
       const revRows = await pool.query(
@@ -1339,19 +1399,12 @@ app.get('/api/public-lists', optionalAuth, async (req, res) => {
        LIMIT $4`,
       [uid, search, `%${search.toLowerCase()}%`, limit]
     )
-    const lists = await Promise.all(r.rows.map(async lst => {
-      const prev = await pool.query(
-        `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
-         WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
-        [lst.id]
-      )
-      return {
-        id: lst.id, title: lst.title, description: lst.description,
-        owner_id: lst.user_id, owner_username: lst.owner_username,
-        item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
-        liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: prev.rows
-      }
+    const previews = await batchListPreviews(r.rows.map(l => l.id))
+    const lists = r.rows.map(lst => ({
+      id: lst.id, title: lst.title, description: lst.description,
+      owner_id: lst.user_id, owner_username: lst.owner_username,
+      item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
+      liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: previews[lst.id] || []
     }))
     const result = { lists }
     await cacheSet(cacheKey, result, TTL.LISTS_PUBLIC)
@@ -1382,19 +1435,12 @@ app.get('/api/lists/public', optionalAuth, async (req, res) => {
        LIMIT $4`,
       [uid, search, `%${search.toLowerCase()}%`, limit]
     )
-    const lists = await Promise.all(r.rows.map(async lst => {
-      const prev = await pool.query(
-        `SELECT rs.name, rs.image_url, LOWER(REPLACE(rs.name,' ','-')) AS slug
-         FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
-         WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
-        [lst.id]
-      )
-      return {
-        id: lst.id, title: lst.title, description: lst.description,
-        owner_id: lst.user_id, owner_username: lst.owner_username,
-        item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
-        liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: prev.rows
-      }
+    const previews = await batchListPreviews(r.rows.map(l => l.id))
+    const lists = r.rows.map(lst => ({
+      id: lst.id, title: lst.title, description: lst.description,
+      owner_id: lst.user_id, owner_username: lst.owner_username,
+      item_count: parseInt(lst.item_count), likes_count: parseInt(lst.likes_count || 0),
+      liked_by_user: Boolean(lst.liked_by_user), preview_restaurants: previews[lst.id] || []
     }))
     const result = { lists }
     await cacheSet(cacheKey, result, TTL.LISTS_PUBLIC)
@@ -1413,13 +1459,9 @@ app.get('/api/lists', authMiddleware, async (req, res) => {
        WHERE l.user_id=$1 GROUP BY l.id ORDER BY l.updated_at DESC`,
       [req.user.id]
     )
-    const lists = await Promise.all(r.rows.map(async lst => {
-      const covers = await pool.query(
-        `SELECT rs.image_url FROM list_items li JOIN restaurants rs ON (rs.id::text = li.restaurant_id OR LOWER(REPLACE(rs.name,' ','-')) = li.restaurant_id)
-         WHERE li.list_id=$1 AND rs.image_url IS NOT NULL AND rs.image_url!='' ORDER BY li.position ASC LIMIT 3`,
-        [lst.id]
-      )
-      return { ...lst, cover_images: covers.rows.map(r => r.image_url) }
+    const previews = await batchListPreviews(r.rows.map(l => l.id))
+    const lists = r.rows.map(lst => ({
+      ...lst, cover_images: (previews[lst.id] || []).map(p => p.image_url)
     }))
     res.json({ lists })
   } catch (err) { res.status(500).json({ message: err.message }) }
@@ -1744,6 +1786,9 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 })
 
 app.get('/api/friends/requests', authMiddleware, async (req, res) => {
+  const cacheKey = `friends:requests:${req.user.id}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT f.id AS friendship_id, f.created_at, u.id AS requester_id, u.username AS requester_username, u.name AS requester_name, u.bio AS requester_bio
@@ -1751,12 +1796,17 @@ app.get('/api/friends/requests', authMiddleware, async (req, res) => {
        WHERE f.addressee_id=$1 AND f.status='pending' ORDER BY f.created_at DESC`,
       [req.user.id]
     )
-    res.json({ requests: r.rows })
+    const result = { requests: r.rows }
+    await cacheSet(cacheKey, result, TTL.FRIENDS_REQUESTS)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 app.get('/api/friends/activity', authMiddleware, async (req, res) => {
   const limit = parseInt(req.query.limit) || 20
+  const cacheKey = `friends:activity:${req.user.id}:${limit}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT v.id AS visit_id, v.restaurant_id, v.visited_at,
@@ -1779,11 +1829,16 @@ app.get('/api/friends/activity', authMiddleware, async (req, res) => {
       ...a, review_snippet: a.review_snippet && a.review_snippet.length > 120
         ? a.review_snippet.slice(0, 120) + '…' : a.review_snippet
     }))
-    res.json({ activity })
+    const result = { activity }
+    await cacheSet(cacheKey, result, TTL.FRIENDS_ACTIVITY)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
 app.get('/api/friends', authMiddleware, async (req, res) => {
+  const cacheKey = `friends:list:${req.user.id}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT f.id AS friendship_id, f.created_at AS friends_since,
@@ -1793,7 +1848,9 @@ app.get('/api/friends', authMiddleware, async (req, res) => {
        WHERE (f.requester_id=$1 OR f.addressee_id=$1) AND f.status='accepted' ORDER BY u.username`,
       [req.user.id]
     )
-    res.json({ friends: r.rows })
+    const result = { friends: r.rows }
+    await cacheSet(cacheKey, result, TTL.FRIENDS_LIST)
+    res.json(result)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
 
@@ -1815,6 +1872,7 @@ app.post('/api/friends/request/:addresseeId', authMiddleware, async (req, res) =
       `INSERT INTO friendships (requester_id, addressee_id, status, created_at, updated_at) VALUES ($1,$2,'pending',NOW(),NOW()) RETURNING id`,
       [req.user.id, addresseeId]
     )
+    await cacheDel(`friends:requests:${addresseeId}`)
     res.json({ success: true, message: 'Friend request sent', friendship_id: r.rows[0].id })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1822,11 +1880,19 @@ app.post('/api/friends/request/:addresseeId', authMiddleware, async (req, res) =
 app.post('/api/friends/:friendshipId/accept', authMiddleware, async (req, res) => {
   const { friendshipId } = req.params
   try {
-    const r = await pool.query(
-      `UPDATE friendships SET status='accepted', updated_at=NOW() WHERE id=$1 AND addressee_id=$2 AND status='pending'`,
+    const fRow = await pool.query(
+      `UPDATE friendships SET status='accepted', updated_at=NOW()
+       WHERE id=$1 AND addressee_id=$2 AND status='pending'
+       RETURNING requester_id, addressee_id`,
       [friendshipId, req.user.id]
     )
-    if (r.rowCount === 0) return res.status(404).json({ message: 'Request not found or not authorized' })
+    if (!fRow.rowCount) return res.status(404).json({ message: 'Request not found or not authorized' })
+    const { requester_id, addressee_id } = fRow.rows[0]
+    await Promise.all([
+      cacheDel(`friends:list:${requester_id}`),
+      cacheDel(`friends:list:${addressee_id}`),
+      cacheDel(`friends:requests:${addressee_id}`),
+    ])
     res.json({ success: true, message: 'Friend request accepted' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1839,6 +1905,7 @@ app.post('/api/friends/:friendshipId/decline', authMiddleware, async (req, res) 
       [friendshipId, req.user.id]
     )
     if (r.rowCount === 0) return res.status(404).json({ message: 'Request not found or not authorized' })
+    await cacheDel(`friends:requests:${req.user.id}`)
     res.json({ success: true, message: 'Request declined' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1846,11 +1913,17 @@ app.post('/api/friends/:friendshipId/decline', authMiddleware, async (req, res) 
 app.delete('/api/friends/:friendshipId', authMiddleware, async (req, res) => {
   const { friendshipId } = req.params
   try {
-    const r = await pool.query(
-      `DELETE FROM friendships WHERE id=$1 AND (requester_id=$2 OR addressee_id=$2)`,
+    const fRow = await pool.query(
+      `DELETE FROM friendships WHERE id=$1 AND (requester_id=$2 OR addressee_id=$2)
+       RETURNING requester_id, addressee_id`,
       [friendshipId, req.user.id]
     )
-    if (r.rowCount === 0) return res.status(404).json({ message: 'Friendship not found or not authorized' })
+    if (!fRow.rowCount) return res.status(404).json({ message: 'Friendship not found or not authorized' })
+    const { requester_id, addressee_id } = fRow.rows[0]
+    await Promise.all([
+      cacheDel(`friends:list:${requester_id}`),
+      cacheDel(`friends:list:${addressee_id}`),
+    ])
     res.json({ success: true, message: 'Friend removed' })
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
@@ -1900,6 +1973,9 @@ app.get('/api/users/:userId/stats', authMiddleware, async (req, res) => {
 app.get('/api/users/:userId/visits/recent', authMiddleware, async (req, res) => {
   const { userId } = req.params
   const limit = Math.min(parseInt(req.query.limit) || 5, 1000)
+  const cacheKey = `visits:user:${userId}:${limit}`
+  const cached = await cacheGet(cacheKey)
+  if (cached) return res.json(cached)
   try {
     const r = await pool.query(
       `SELECT v.restaurant_id, LOWER(REPLACE(rs.name,' ','-')) AS slug,
@@ -1911,6 +1987,7 @@ app.get('/api/users/:userId/visits/recent', authMiddleware, async (req, res) => 
        WHERE v.user_id=$1 ORDER BY v.visited_at DESC LIMIT $2`,
       [userId, limit]
     )
+    await cacheSet(cacheKey, r.rows, TTL.VISITS_USER)
     res.json(r.rows)
   } catch (err) { res.status(500).json({ message: err.message }) }
 })
